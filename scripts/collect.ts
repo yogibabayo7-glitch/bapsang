@@ -304,6 +304,10 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
 // 직접 실행했을 때
 if (import.meta.url === `file://${process.argv[1]}`) {
   const day = process.argv[2];
+  if (!process.env.KAMIS_CERT_KEY || !process.env.KAMIS_CERT_ID) {
+    console.log('KAMIS 인증키가 아직 없어요. Secrets에 KAMIS_CERT_KEY, KAMIS_CERT_ID를 넣으면 수집을 시작해요.');
+    process.exit(0);
+  }
   collect(kamisFetch, { day }).catch((e) => {
     console.error(e);
     process.exit(1);
