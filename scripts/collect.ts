@@ -168,7 +168,7 @@ export function chooseItems(all: Map<string, Row[]>): Chosen[] {
       entry: {
         id: `auto-${k}`,
         name: sameName ? `${r0.name} ${r0.kindName.replace(/\(.*$/, '')}` : r0.name,
-        emoji: { grain: '🌾', veg: '🥬', mush: '🍄', fruit: '🍑', meat: '🥩', fish: '🐟' }[cat],
+        emoji: { grain: '🌾', veg: '🥬', mush: '🍄', fruit: '🍑', meat: '🥩', fish: '🐟', spice: '🧂' }[cat],
         cat,
         code: r0.code,
         kind: r0.kind,

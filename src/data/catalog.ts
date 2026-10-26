@@ -2,7 +2,7 @@
 // code: KAMIS 품목코드 / kind: 품종코드('*'면 그날 가장 많이 조사된 품종) / rank: 등급 우선순위
 // season: 제철인 달 (1~12)
 
-export type CategoryId = 'grain' | 'veg' | 'mush' | 'fruit' | 'meat' | 'fish';
+export type CategoryId = 'grain' | 'veg' | 'mush' | 'fruit' | 'meat' | 'fish' | 'spice';
 
 export type CatalogEntry = {
   id: string;
@@ -32,6 +32,7 @@ export const CATEGORY_LABEL: Record<CategoryId, string> = {
   fruit: '과일',
   meat: '고기·계란',
   fish: '수산',
+  spice: '양념',
 };
 
 // 등급을 따로 안 정하면 이 순서로 고르기 (상품 → 한우 1+ → 일반란 → 기타)
@@ -65,8 +66,8 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'onion', name: '양파', emoji: '🧅', cat: 'veg', code: '245', kind: '*', season: [5, 6] },
   { id: 'green-onion', name: '대파', emoji: '🌿', cat: 'veg', code: '246', kind: '00', season: [11, 12, 1] },
   { id: 'scallion', name: '쪽파', emoji: '🌱', cat: 'veg', code: '246', kind: '02' },
-  { id: 'garlic', name: '깐마늘', emoji: '🧄', cat: 'veg', code: '258', kind: '*', season: [5, 6] },
-  { id: 'ginger', name: '생강', emoji: '🫚', cat: 'veg', code: '247', kind: '*', season: [10, 11] },
+  { id: 'garlic', name: '깐마늘', emoji: '🧄', cat: 'spice', code: '258', kind: '*', season: [5, 6] },
+  { id: 'ginger', name: '생강', emoji: '🫚', cat: 'spice', code: '247', kind: '*', season: [10, 11] },
   { id: 'carrot', name: '당근', emoji: '🥕', cat: 'veg', code: '232', kind: '*' },
   { id: 'cucumber', name: '오이', emoji: '🥒', cat: 'veg', code: '223', kind: '02', season: [5, 6, 7] },
   { id: 'zucchini', name: '애호박', emoji: '🥒', cat: 'veg', code: '224', kind: '01', season: [6, 7, 8] },
@@ -79,8 +80,8 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'green-pepper', name: '풋고추', emoji: '🌶️', cat: 'veg', code: '242', kind: '00', season: [7, 8] },
   { id: 'cheongyang', name: '청양고추', emoji: '🌶️', cat: 'veg', code: '242', kind: '03', season: [7, 8] },
   { id: 'red-pepper', name: '붉은고추', emoji: '🌶️', cat: 'veg', code: '243', kind: '*', season: [8, 9] },
-  { id: 'dried-pepper', name: '건고추', emoji: '🌶️', cat: 'veg', code: '241', kind: '*', season: [8, 9] },
-  { id: 'pepper-powder', name: '고춧가루', emoji: '🌶️', cat: 'veg', code: '248', kind: '00' },
+  { id: 'dried-pepper', name: '건고추', emoji: '🌶️', cat: 'spice', code: '241', kind: '*', season: [8, 9] },
+  { id: 'pepper-powder', name: '고춧가루', emoji: '🌶️', cat: 'spice', code: '248', kind: '00' },
   { id: 'watermelon', name: '수박', emoji: '🍉', cat: 'veg', code: '221', kind: '*', season: [6, 7, 8] },
   { id: 'korean-melon', name: '참외', emoji: '🍈', cat: 'veg', code: '222', kind: '*', season: [4, 5, 6] },
   { id: 'melon', name: '멜론', emoji: '🍈', cat: 'veg', code: '257', kind: '*' },
@@ -90,7 +91,7 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'oyster-mushroom', name: '느타리버섯', emoji: '🍄', cat: 'mush', code: '315', kind: '*', season: [9, 10] },
   { id: 'enoki', name: '팽이버섯', emoji: '🍄', cat: 'mush', code: '316', kind: '*' },
   { id: 'king-oyster', name: '새송이버섯', emoji: '🍄', cat: 'mush', code: '317', kind: '*' },
-  { id: 'sesame', name: '참깨', emoji: '🌰', cat: 'mush', code: '312', kind: '01' },
+  { id: 'sesame', name: '참깨', emoji: '🌰', cat: 'spice', code: '312', kind: '01' },
   { id: 'peanut', name: '땅콩', emoji: '🥜', cat: 'mush', code: '314', kind: '01', season: [9, 10] },
   { id: 'walnut', name: '호두', emoji: '🌰', cat: 'mush', code: '318', kind: '*' },
   { id: 'almond', name: '아몬드', emoji: '🌰', cat: 'mush', code: '319', kind: '*' },
@@ -149,9 +150,9 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'laver', name: '김', emoji: '🍙', cat: 'fish', code: '641', kind: '00', season: [12, 1, 2] },
   { id: 'seaweed', name: '마른미역', emoji: '🌿', cat: 'fish', code: '642', kind: '*' },
   { id: 'kelp', name: '건다시마', emoji: '🌿', cat: 'fish', code: '660', kind: '*' },
-  { id: 'salted-shrimp', name: '새우젓', emoji: '🦐', cat: 'fish', code: '650', kind: '*', season: [11] },
-  { id: 'fish-sauce', name: '멸치액젓', emoji: '🫙', cat: 'fish', code: '651', kind: '*', season: [11] },
-  { id: 'sea-salt', name: '천일염', emoji: '🧂', cat: 'fish', code: '652', kind: '*' },
+  { id: 'salted-shrimp', name: '새우젓', emoji: '🦐', cat: 'spice', code: '650', kind: '*', season: [11] },
+  { id: 'fish-sauce', name: '멸치액젓', emoji: '🫙', cat: 'spice', code: '651', kind: '*', season: [11] },
+  { id: 'sea-salt', name: '천일염', emoji: '🧂', cat: 'spice', code: '652', kind: '*' },
 ];
 
 // KAMIS가 매일 소매가격을 조사하는 도시 (지역코드)
