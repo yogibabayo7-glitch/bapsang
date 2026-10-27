@@ -1,5 +1,5 @@
 // 토스 SDK 연결부: 저장소, 공유, 이벤트 기록
-import { Analytics, Storage, TossAds, loadFullScreenAd, share } from '@apps-in-toss/web-framework';
+import { Analytics, Device, Storage, TossAds, loadFullScreenAd, share } from '@apps-in-toss/web-framework';
 
 function inToss(): boolean {
   try {
@@ -78,10 +78,23 @@ export type TrackEvent =
   | 'favorite_added' // 자주 찾는 품목 추가
   | 'region_changed'
   | 'summary_shared'
-  | 'basket_opened';
+  | 'basket_opened'
+  | 'kimjang_opened'
+  | 'shop_clicked'; // 토스쇼핑 상품 누름 (보상 없음)
 
 export function track(name: TrackEvent, params: Record<string, string | number> = {}): void {
   try {
     void Analytics.click({ log_name: name, ...params });
+  } catch {}
+}
+
+// 링크 열기 (토스쇼핑 쉐어링크 등)
+export async function openLink(url: string): Promise<void> {
+  try {
+    await Device.openURL(url);
+    return;
+  } catch {}
+  try {
+    window.open(url, '_blank');
   } catch {}
 }

@@ -24,3 +24,12 @@ export type PriceBook = {
 export type History = { region: string; points: Record<string, [string, number][]> };
 
 export const Q = { now: 0, d1: 1, w1: 2, w2: 3, m1: 4, y1: 5 } as const;
+
+// 토스쇼핑 추천 상품 (tools/shop 스크립트가 매일 만들어요)
+export type ShopItem = { id: string; name: string; thumb: string; url: string; cat?: string };
+export type Shop = {
+  updatedAt: string;
+  disclosure: string;
+  pages?: { fresh?: string; deals?: string };
+  groups: Record<string, ShopItem[]>;
+};

@@ -2,7 +2,7 @@
 // .env 파일의 VITE_DATA_BASE에 GitHub Pages 주소를 넣으면 진짜 시세를 써요. 비어 있으면 샘플을 보여줘요.
 // 예: VITE_DATA_BASE=https://아이디.github.io/jangbaguni/data
 import { makeSampleBook, makeSampleHistory } from './sample';
-import type { History, PriceBook } from './types';
+import type { History, PriceBook, Shop } from './types';
 
 export const DATA_BASE: string = import.meta.env.VITE_DATA_BASE ?? '';
 
@@ -25,4 +25,17 @@ export async function loadHistory(region: string): Promise<History | null> {
     return null;
   }
   return makeSampleHistory(region);
+}
+
+// 토스쇼핑 추천 상품. 아직 없거나 못 받으면 null (화면에서 그 칸을 숨겨요)
+export async function loadShop(): Promise<Shop | null> {
+  if (!DATA_BASE) return null;
+  try {
+    const res = await fetch(`${DATA_BASE}/shop.json`, { cache: 'no-cache' });
+    if (!res.ok) return null;
+    const s = (await res.json()) as Shop;
+    return s?.groups ? s : null;
+  } catch {
+    return null;
+  }
 }

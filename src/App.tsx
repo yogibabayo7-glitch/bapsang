@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORY_LABEL, regionNote, type CategoryId, type Region } from './data/catalog';
-import { loadHistory, loadPriceBook } from './data/source';
-import { Q, type History, type Item, type PriceBook } from './data/types';
+import { loadHistory, loadPriceBook, loadShop } from './data/source';
+import { Q, type History, type Item, type PriceBook, type Shop } from './data/types';
+import { KimjangCard, isKimjangSeason } from './Kimjang';
+import { ShopStrip, productsFor } from './Shop';
 import { ICONS, ICON_OF } from './icons';
 import { BANNER_AD_ID, attachBanner, getItem, setItem, shareText, track } from './platform';
 
@@ -92,6 +94,7 @@ export default function App() {
   const [toast, setToast] = useState('');
   const [qty, setQty] = useState<Record<string, number>>({});
   const [basketOpen, setBasketOpen] = useState(false);
+  const [shop, setShop] = useState<Shop | null>(null);
   const month = new Date().getMonth() + 1;
 
   useEffect(() => {
@@ -113,6 +116,7 @@ export default function App() {
       if (c === 'day' || c === 'week') setCompare(c);
       setBook(b);
       track('price_viewed', { region: r || 'all' });
+      loadShop().then(setShop);
     })();
   }, []);
 
@@ -289,6 +293,8 @@ export default function App() {
           <p className="headline">{headline}</p>
         </section>
 
+        {isKimjangSeason() && <KimjangCard book={book} region={region} regionName={regionLabel} shop={shop} />}
+
         {bestBuys.length > 0 && (
           <section className="card">
             <h2>🛒 지금 사기 좋은 품목</h2>
@@ -301,6 +307,15 @@ export default function App() {
                 </button>
               ))}
             </div>
+            {!isKimjangSeason() && (
+              <ShopStrip
+                shop={shop}
+                items={productsFor(shop, bestBuys[0].name, bestBuys[0].cat, 10)}
+                title={`🛍️ ${josa(bestBuys[0].name, '이', '가')} 쌀 때 토스쇼핑에서 보기`}
+                from="best"
+                showFresh
+              />
+            )}
           </section>
         )}
 
@@ -516,6 +531,7 @@ export default function App() {
           quote={book.q[region][d.id]}
           region={region}
           regionName={regionLabel}
+          shop={shop}
           fav={favs.includes(d.id)}
           onFav={() => toggleFav(d.id)}
           onClose={() => setDetail(null)}
@@ -544,6 +560,7 @@ function Detail({
   quote,
   region,
   regionName,
+  shop,
   fav,
   onFav,
   onClose,
@@ -552,6 +569,7 @@ function Detail({
   quote: (number | null)[];
   region: string;
   regionName: string;
+  shop: Shop | null;
   fav: boolean;
   onFav: () => void;
   onClose: () => void;
@@ -655,6 +673,7 @@ function Detail({
               ? '💡 최근 중 비싼 편이에요. 급하지 않다면 조금 기다려 보세요.'
               : '💡 최근 평균 수준이에요.'}
         </p>
+        <ShopStrip shop={shop} items={productsFor(shop, row.name, row.cat)} title={`🛍️ 토스쇼핑에서 ${row.name} 보기`} from="detail" />
         <Banner />
         <button className="btn full" onClick={onClose}>
           닫기
