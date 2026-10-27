@@ -222,6 +222,7 @@ export default function App() {
       <span className="nm">
         <b>
           {r.name}
+          {r.origin === 'kr' && <i className="kr">국산</i>}
           {r.inSeason && <i className="season">제철</i>}
           {r.cheap && <i className="cheap">평소보다 싸요</i>}
         </b>
@@ -640,10 +641,13 @@ function Detail({
           <div>
             <h2>
               {row.name} <small>{row.unit}</small>
+              {row.origin === 'kr' && <i className="kr">국산</i>}
               {row.inSeason && <i className="season">제철</i>}
               {row.cheap && <i className="cheap">평소보다 싸요</i>}
             </h2>
-            <p className="date">{regionName} 평균 시세</p>
+            <p className="date">
+              {regionName} 평균 시세{row.origin === 'kr' ? ' · 국산 품종만 조사한 값' : ''}
+            </p>
           </div>
           <button className={`star ${fav ? 'on' : ''}`} onClick={onFav} aria-label="자주 찾는 품목">
             {fav ? '★' : '☆'}
