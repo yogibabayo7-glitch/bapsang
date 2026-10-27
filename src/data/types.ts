@@ -7,6 +7,8 @@ export type Item = {
   emoji: string;
   cat: CategoryId;
   season?: number[];
+  origin?: 'kr'; // 국산 품종 시세
+  kindName?: string; // KAMIS 품종 이름
 };
 
 // q[지역][품목] = [오늘, 1일전, 1주전, 2주전, 1개월전, 1년전] (없으면 null)

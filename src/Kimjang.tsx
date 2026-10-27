@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { Q, type PriceBook, type Shop } from './data/types';
 import { getItem, setItem, shareText, track } from './platform';
-import { ShopStrip } from './Shop';
+import { CabbageSheet, useCabbage } from './Cabbage';
+import { ShopStrip, domesticOnly } from './Shop';
 
 // 배추 20포기(4인 가족) 기준 재료. per = KAMIS 단위로 몇 개 분량인지
 const RECIPE: { id: string; name: string; amount: number; unit: string; per: number }[] = [
@@ -34,11 +35,21 @@ export function isKimjangSeason(d = new Date()) {
   return m === 11 || (m === 10 && d.getDate() >= 15) || (m === 12 && d.getDate() <= 20);
 }
 
-type Line = { id: string; name: string; label: string; now: number; w1: number | null; y1: number | null; national: boolean };
+type Line = {
+  id: string;
+  name: string;
+  label: string;
+  now: number;
+  w1: number | null;
+  y1: number | null;
+  national: boolean;
+  kr: boolean;
+};
 
 function calc(book: PriceBook, region: string, heads: number) {
   const scale = heads / 20;
   const lines: Line[] = [];
+  const meta = new Map(book.items.map((i) => [i.id, i]));
   for (const r of RECIPE) {
     let q = book.q[region]?.[r.id];
     let national = false;
@@ -56,6 +67,7 @@ function calc(book: PriceBook, region: string, heads: number) {
       w1: q[Q.w1] != null ? q[Q.w1]! * k : null,
       y1: q[Q.y1] != null ? q[Q.y1]! * k : null,
       national: national && region !== 'all',
+      kr: meta.get(r.id)?.origin === 'kr',
     });
   }
   const total = lines.reduce((a, l) => a + l.now, 0);
@@ -103,6 +115,8 @@ export function KimjangCard({
 }) {
   const [heads, setHeads] = useState(20);
   const [open, setOpen] = useState(false);
+  const [cabbageOpen, setCabbageOpen] = useState(false);
+  const cabbage = useCabbage(shop);
   useEffect(() => {
     getItem(KEY).then((v) => {
       const n = Number(v);
@@ -115,7 +129,8 @@ export function KimjangCard({
   };
   const r = calc(book, region, heads);
   if (r.lines.length < 6) return null;
-  const kimjangShop = shop?.groups.kimjang ?? [];
+  const kimjangShop = domesticOnly(shop?.groups.kimjang ?? []);
+  const allKr = r.lines.length > 0 && r.lines.every((l) => l.kr);
 
   return (
     <section className="card kimjang">
@@ -142,16 +157,29 @@ export function KimjangCard({
       <Diff c={r.year} label="작년 이맘때" />
       <Diff c={r.week} label="지난주" />
       <p className="kjNote">
-        {regionName} 시세로 계산한 재료 {r.lines.length}가지 값이에요{heads === 20 ? ' (4인 가족 기준)' : ''}.
+        {regionName} {allKr ? '국산 ' : ''}시세로 계산한 재료 {r.lines.length}가지 값이에요{heads === 20 ? ' (4인 가족 기준)' : ''}.
       </p>
       <ShopStrip shop={shop} items={kimjangShop.slice(0, 10)} title="🛒 김장 재료 토스쇼핑에서 보기" from="kimjang" />
+      {shop && cabbage.all.length >= 2 && (
+        <button
+          className="btn ghost full cbOpen"
+          onClick={() => {
+            setCabbageOpen(true);
+            track('cabbage_opened', { kinds: cabbage.kinds.length });
+          }}
+        >
+          🥬 배추 종류별로 골라 보기
+          {cabbage.kinds.length > 0 && <small>{cabbage.kinds.map((k) => k.label).join(' · ')}</small>}
+        </button>
+      )}
+      {cabbageOpen && shop && <CabbageSheet shop={shop} onClose={() => setCabbageOpen(false)} />}
 
       {open && (
         <div className="sheetBg" onClick={() => setOpen(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <h2>배추 {heads}포기 김장 재료</h2>
             <p className="hint" style={{ marginBottom: 8 }}>
-              {regionName} 평균 소매가로 계산했어요. 집집마다 레시피가 달라서 참고용이에요.
+              {regionName} 평균 소매가{allKr ? '(국산 품종)' : ''}로 계산했어요. 집집마다 레시피가 달라서 참고용이에요.
             </p>
             <ul className="list kjList">
               {r.lines.map((l) => (
@@ -160,6 +188,7 @@ export function KimjangCard({
                     <b>{l.name}</b>
                     <small>
                       {l.label}
+                      {l.kr ? ' · 국산' : ''}
                       {l.national ? ' · 전국 가격' : ''}
                     </small>
                   </span>

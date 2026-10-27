@@ -80,6 +80,8 @@ export type TrackEvent =
   | 'summary_shared'
   | 'basket_opened'
   | 'kimjang_opened'
+  | 'cabbage_opened' // 배추 종류별 보기 열기
+  | 'cabbage_kind_selected' // 배추 산지·종류 칩 누름
   | 'shop_clicked'; // 토스쇼핑 상품 누름 (보상 없음)
 
 export function track(name: TrackEvent, params: Record<string, string | number> = {}): void {

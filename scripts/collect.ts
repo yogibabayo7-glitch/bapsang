@@ -3,7 +3,7 @@
 // 결과: docs/data/latest.json, docs/data/hist/{지역}.json  (GitHub Pages로 공개)
 //       data/snapshots/{날짜}.json                         (그래프용 기록)
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
-import { CATALOG, DEFAULT_RANK, KAMIS_CATEGORY, REGIONS, SURVEY_CITIES, type CatalogEntry, type CategoryId } from '../src/data/catalog.ts';
+import { CATALOG, DEFAULT_RANK, DOMESTIC_RE, IMPORTED_RE, KAMIS_CATEGORY, REGIONS, SURVEY_CITIES, type CatalogEntry, type CategoryId } from '../src/data/catalog.ts';
 
 const BASE = 'https://www.kamis.or.kr/service/price/xml.do';
 const CATS = ['100', '200', '300', '400', '500', '600'];
@@ -122,7 +122,7 @@ export async function findSurveyDay(fetchRows: FetchRows, start = kstDay()): Pro
 }
 
 // ── 품목 고르기 ──
-type Chosen = { entry: CatalogEntry & { auto?: boolean }; kind: string; rank: string; unit: string };
+type Chosen = { entry: CatalogEntry & { auto?: boolean }; kind: string; kindName?: string; rank: string; unit: string };
 
 function rankOrder(entry: CatalogEntry) {
   return [...(entry.rank ?? []), ...DEFAULT_RANK];
@@ -134,13 +134,21 @@ export function chooseItems(all: Map<string, Row[]>): Chosen[] {
   const usedCodes = new Set<string>();
 
   for (const entry of CATALOG) {
-    const match = rows.filter((r) => r.code === entry.code && (entry.kind === '*' || r.kind === entry.kind));
-    if (!match.length) continue;
-    usedCodes.add(entry.code);
-    // 품종: 지정했으면 그것, '*'면 가장 많은 지역에서 조사된 것
+    const sameCode = rows.filter((r) => r.code === entry.code);
+    if (sameCode.length) usedCodes.add(entry.code); // 국산이 없어도 수입 품종이 '새 품목'으로 따로 붙지 않게
+    let match = sameCode.filter((r) => entry.kind === '*' || r.kind === entry.kind);
+    // 국산만: 품목·품종 이름에 수입/중국산 등이 들어간 줄은 빼요
+    if (entry.origin === 'kr') match = match.filter((r) => !IMPORTED_RE.test(`${r.name} ${r.kindName}`));
+    if (!match.length) {
+      if (entry.origin === 'kr' && sameCode.length) console.log(`${entry.name}: 국산 품종이 조사되지 않아 이번엔 빼요`);
+      continue;
+    }
+    // 품종: 지정했으면 그것, '*'면 가장 많은 지역에서 조사된 것 (국산만이면 '국산'이라고 적힌 품종 우선)
     const kindCount = new Map<string, number>();
     match.forEach((r) => kindCount.set(r.kind, (kindCount.get(r.kind) ?? 0) + 1));
-    const kind = entry.kind !== '*' ? entry.kind : [...kindCount.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    const isKr = (k: string) => (entry.origin === 'kr' && match.some((r) => r.kind === k && DOMESTIC_RE.test(`${r.name} ${r.kindName}`)) ? 1 : 0);
+    const kind =
+      entry.kind !== '*' ? entry.kind : [...kindCount.entries()].sort((a, b) => isKr(b[0]) - isKr(a[0]) || b[1] - a[1])[0][0];
     const ofKind = match.filter((r) => r.kind === kind);
     const order = rankOrder(entry);
     const ranks = [...new Set(ofKind.map((r) => r.rank))].sort(
@@ -148,7 +156,9 @@ export function chooseItems(all: Map<string, Row[]>): Chosen[] {
     );
     const rank = ranks[0];
     const unit = ofKind.find((r) => r.rank === rank)?.unit ?? '';
-    chosen.push({ entry, kind, rank, unit });
+    const kindName = ofKind[0]?.kindName || undefined;
+    if (entry.origin === 'kr') console.log(`국산 ${entry.name}: 품종 ${kind} ${kindName ?? ''} / 등급 ${rank}`);
+    chosen.push({ entry, kind, kindName, rank, unit });
   }
 
   // 목록에 없는 새 품목(제철 과일 등)은 5개 지역 이상 조사되면 자동으로 추가
@@ -331,6 +341,8 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
       emoji: c.entry.emoji,
       cat: c.entry.cat,
       ...(c.entry.season ? { season: c.entry.season } : {}),
+      ...(c.entry.origin ? { origin: c.entry.origin } : {}),
+      ...(c.kindName ? { kindName: c.kindName } : {}),
     }));
 
   // 아직 다 안 올라온 날이면 (이전보다 품목이 확 적으면) 덮어쓰지 않아요

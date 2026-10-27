@@ -13,7 +13,13 @@ export type CatalogEntry = {
   kind: string;
   rank?: string[];
   season?: number[];
+  // 'kr' = 국산 품종만 (수입·중국산 품종은 고르지 않아요). 김장 재료에 써요.
+  origin?: 'kr';
 };
+
+// 품종·품목 이름으로 수입/국산 가리기 (KAMIS 품종 이름 예: "국산", "중국산", "수입")
+export const IMPORTED_RE = /수입|중국|외국|미국|호주|베트남|칠레|러시아|노르웨이|뉴질랜드|태국|인도/;
+export const DOMESTIC_RE = /국산|국내/;
 
 // KAMIS 부류코드 → 앱 카테고리
 export const KAMIS_CATEGORY: Record<string, CategoryId> = {
@@ -52,22 +58,22 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'potato', name: '감자', emoji: '🥔', cat: 'grain', code: '152', kind: '*', season: [6, 7, 8] },
 
   // 채소
-  { id: 'cabbage', name: '배추', emoji: '🥬', cat: 'veg', code: '211', kind: '*', season: [11, 12] },
+  { id: 'cabbage', name: '배추', emoji: '🥬', cat: 'veg', code: '211', kind: '*', season: [11, 12], origin: 'kr' },
   { id: 'baby-cabbage', name: '알배기배추', emoji: '🥬', cat: 'veg', code: '279', kind: '*' },
   { id: 'young-cabbage', name: '얼갈이배추', emoji: '🥬', cat: 'veg', code: '215', kind: '*' },
-  { id: 'radish', name: '무', emoji: '🤍', cat: 'veg', code: '231', kind: '*', season: [10, 11, 12] },
+  { id: 'radish', name: '무', emoji: '🤍', cat: 'veg', code: '231', kind: '*', season: [10, 11, 12], origin: 'kr' },
   { id: 'young-radish', name: '열무', emoji: '🌿', cat: 'veg', code: '233', kind: '*', season: [5, 6, 7] },
   { id: 'cabbage-head', name: '양배추', emoji: '🥬', cat: 'veg', code: '212', kind: '*' },
   { id: 'spinach', name: '시금치', emoji: '🥬', cat: 'veg', code: '213', kind: '*', season: [12, 1, 2] },
   { id: 'lettuce', name: '상추', emoji: '🥗', cat: 'veg', code: '214', kind: '01' },
   { id: 'perilla', name: '깻잎', emoji: '🌿', cat: 'veg', code: '253', kind: '*', season: [7, 8, 9] },
   { id: 'chives', name: '부추', emoji: '🌿', cat: 'veg', code: '254', kind: '*', season: [3, 4] },
-  { id: 'water-parsley', name: '미나리', emoji: '🌿', cat: 'veg', code: '252', kind: '*', season: [2, 3, 4] },
+  { id: 'water-parsley', name: '미나리', emoji: '🌿', cat: 'veg', code: '252', kind: '*', season: [2, 3, 4], origin: 'kr' },
   { id: 'onion', name: '양파', emoji: '🧅', cat: 'veg', code: '245', kind: '*', season: [5, 6] },
-  { id: 'green-onion', name: '대파', emoji: '🌿', cat: 'veg', code: '246', kind: '00', season: [11, 12, 1] },
-  { id: 'scallion', name: '쪽파', emoji: '🌱', cat: 'veg', code: '246', kind: '02' },
-  { id: 'garlic', name: '깐마늘', emoji: '🧄', cat: 'spice', code: '258', kind: '*', season: [5, 6] },
-  { id: 'ginger', name: '생강', emoji: '🫚', cat: 'spice', code: '247', kind: '*', season: [10, 11] },
+  { id: 'green-onion', name: '대파', emoji: '🌿', cat: 'veg', code: '246', kind: '00', season: [11, 12, 1], origin: 'kr' },
+  { id: 'scallion', name: '쪽파', emoji: '🌱', cat: 'veg', code: '246', kind: '02', origin: 'kr' },
+  { id: 'garlic', name: '깐마늘', emoji: '🧄', cat: 'spice', code: '258', kind: '*', season: [5, 6], origin: 'kr' },
+  { id: 'ginger', name: '생강', emoji: '🫚', cat: 'spice', code: '247', kind: '*', season: [10, 11], origin: 'kr' },
   { id: 'carrot', name: '당근', emoji: '🥕', cat: 'veg', code: '232', kind: '*' },
   { id: 'cucumber', name: '오이', emoji: '🥒', cat: 'veg', code: '223', kind: '02', season: [5, 6, 7] },
   { id: 'zucchini', name: '애호박', emoji: '🥒', cat: 'veg', code: '224', kind: '01', season: [6, 7, 8] },
@@ -80,8 +86,8 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'green-pepper', name: '풋고추', emoji: '🌶️', cat: 'veg', code: '242', kind: '00', season: [7, 8] },
   { id: 'cheongyang', name: '청양고추', emoji: '🌶️', cat: 'veg', code: '242', kind: '03', season: [7, 8] },
   { id: 'red-pepper', name: '붉은고추', emoji: '🌶️', cat: 'veg', code: '243', kind: '*', season: [8, 9] },
-  { id: 'dried-pepper', name: '건고추', emoji: '🌶️', cat: 'spice', code: '241', kind: '*', season: [8, 9] },
-  { id: 'pepper-powder', name: '고춧가루', emoji: '🌶️', cat: 'spice', code: '248', kind: '00' },
+  { id: 'dried-pepper', name: '건고추', emoji: '🌶️', cat: 'spice', code: '241', kind: '*', season: [8, 9], origin: 'kr' },
+  { id: 'pepper-powder', name: '고춧가루', emoji: '🌶️', cat: 'spice', code: '248', kind: '00', origin: 'kr' },
   { id: 'watermelon', name: '수박', emoji: '🍉', cat: 'veg', code: '221', kind: '*', season: [6, 7, 8] },
   { id: 'korean-melon', name: '참외', emoji: '🍈', cat: 'veg', code: '222', kind: '*', season: [4, 5, 6] },
   { id: 'melon', name: '멜론', emoji: '🍈', cat: 'veg', code: '257', kind: '*' },
@@ -145,7 +151,7 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'mussel', name: '홍합', emoji: '🦪', cat: 'fish', code: '658', kind: '02', season: [11, 12, 1, 2] },
   { id: 'clam', name: '바지락', emoji: '🐚', cat: 'fish', code: '661', kind: '*', season: [3, 4, 5] },
   { id: 'cockle', name: '꼬막', emoji: '🐚', cat: 'fish', code: '665', kind: '*', season: [12, 1, 2, 3] },
-  { id: 'oyster', name: '굴', emoji: '🦪', cat: 'fish', code: '644', kind: '*', season: [11, 12, 1, 2] },
+  { id: 'oyster', name: '굴', emoji: '🦪', cat: 'fish', code: '644', kind: '*', season: [11, 12, 1, 2], origin: 'kr' },
   { id: 'scallop', name: '가리비', emoji: '🐚', cat: 'fish', code: '659', kind: '*', season: [11, 12, 1, 2] },
   { id: 'imported-croaker', name: '수입 조기', emoji: '🐟', cat: 'fish', code: '649', kind: '*' },
   { id: 'mackerel-fillet-kr', name: '고등어 필렛(국산)', emoji: '🐟', cat: 'fish', code: '662', kind: '01' },
@@ -155,9 +161,9 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'laver', name: '김', emoji: '🍙', cat: 'fish', code: '641', kind: '00', season: [12, 1, 2] },
   { id: 'seaweed', name: '마른미역', emoji: '🌿', cat: 'fish', code: '642', kind: '*' },
   { id: 'kelp', name: '건다시마', emoji: '🌿', cat: 'fish', code: '660', kind: '*' },
-  { id: 'salted-shrimp', name: '새우젓', emoji: '🦐', cat: 'spice', code: '650', kind: '*', season: [11] },
-  { id: 'fish-sauce', name: '멸치액젓', emoji: '🫙', cat: 'spice', code: '651', kind: '*', season: [11] },
-  { id: 'sea-salt', name: '천일염', emoji: '🧂', cat: 'spice', code: '652', kind: '*' },
+  { id: 'salted-shrimp', name: '새우젓', emoji: '🦐', cat: 'spice', code: '650', kind: '*', season: [11], origin: 'kr' },
+  { id: 'fish-sauce', name: '멸치액젓', emoji: '🫙', cat: 'spice', code: '651', kind: '*', season: [11], origin: 'kr' },
+  { id: 'sea-salt', name: '천일염', emoji: '🧂', cat: 'spice', code: '652', kind: '*', origin: 'kr' },
 ];
 
 // KAMIS가 매일 소매가격을 조사하는 도시 (지역코드)
