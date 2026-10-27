@@ -91,10 +91,10 @@ export const CATALOG: CatalogEntry[] = [
   { id: 'oyster-mushroom', name: '느타리버섯', emoji: '🍄', cat: 'mush', code: '315', kind: '*', season: [9, 10] },
   { id: 'enoki', name: '팽이버섯', emoji: '🍄', cat: 'mush', code: '316', kind: '*' },
   { id: 'king-oyster', name: '새송이버섯', emoji: '🍄', cat: 'mush', code: '317', kind: '*' },
-  { id: 'sesame', name: '참깨', emoji: '🌰', cat: 'spice', code: '312', kind: '01' },
+  { id: 'sesame', name: '참깨', emoji: '🫘', cat: 'spice', code: '312', kind: '01' },
   { id: 'peanut', name: '땅콩', emoji: '🥜', cat: 'mush', code: '314', kind: '01', season: [9, 10] },
-  { id: 'walnut', name: '호두', emoji: '🌰', cat: 'mush', code: '318', kind: '*' },
-  { id: 'almond', name: '아몬드', emoji: '🌰', cat: 'mush', code: '319', kind: '*' },
+  { id: 'walnut', name: '호두', emoji: '🥜', cat: 'mush', code: '318', kind: '*' },
+  { id: 'almond', name: '아몬드', emoji: '🥜', cat: 'mush', code: '319', kind: '*' },
 
   // 과일
   { id: 'apple', name: '사과', emoji: '🍎', cat: 'fruit', code: '411', kind: '*', season: [9, 10, 11] },
