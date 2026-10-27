@@ -318,6 +318,36 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
       for (const [id, v] of Object.entries(q[region])) if (v[idx] == null && snapQ[region]?.[id]) v[idx] = snapQ[region][id];
   }
 
+  // 30일 평균 ("평소보다 싸요" 배지용, q의 7번째 값)
+  // 오늘을 뺀 지난 30일의 날짜별 가격: 저장해 둔 조사일 기록 + KAMIS가 준 1주 전·2주 전·1개월 전 가격
+  // 기록이 3개 이상이고 2주 넘게 걸쳐 있을 때만 계산해요
+  const AVG_IDX = KEYS.length;
+  const dayMs = (d: string) => new Date(d + 'T00:00:00Z').getTime();
+  const ago = (n: number) => new Date(dayMs(day) - n * 86400000).toISOString().slice(0, 10);
+  const recent = [...new Set(listDays())]
+    .filter((d) => d < day && d >= ago(30))
+    .map((d) => ({ d, q: (JSON.parse(readFileSync(`${dirOf(d)}/${d}.json`, 'utf8')) as { q: Record<string, Record<string, number>> }).q }));
+  let avgCount = 0;
+  for (const region of regionCodes) {
+    for (const [id, v] of Object.entries(q[region])) {
+      const pts = new Map<string, number>();
+      for (const s of recent) if (s.q[region]?.[id]) pts.set(s.d, s.q[region][id]);
+      for (const [i, d] of [[2, ago(7)], [3, ago(14)], [4, shift(-1, 0)]] as [number, string][]) {
+        // 같은 날 기록이 이미 있으면(앞뒤 하루) 그걸 써요
+        const near = [...pts.keys()].some((k) => Math.abs(dayMs(k) - dayMs(d)) <= 86400000);
+        if (v[i] != null && !near) pts.set(d, v[i]!);
+      }
+      const ds = [...pts.keys()].sort();
+      v[AVG_IDX] = null;
+      if (pts.size >= 3 && dayMs(ds[ds.length - 1]) - dayMs(ds[0]) >= 14 * 86400000) {
+        const xs = [...pts.values()];
+        v[AVG_IDX] = Math.round(xs.reduce((a, b) => a + b, 0) / xs.length / 10) * 10;
+        if (region === '1101') avgCount++;
+      }
+    }
+  }
+  console.log(`30일 평균: 서울 ${avgCount}개 품목 계산 (기록 ${recent.length}일 + KAMIS 1주·2주·1개월 전)`);
+
   // 전국·경기 등 묶음 지역 = 속한 조사 도시들의 평균
   for (const r of REGIONS) {
     if (!r.members) continue;
@@ -325,7 +355,7 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
     for (const c of chosen) {
       const vals = r.members.map((rg) => q[rg]?.[c.entry.id]).filter(Boolean) as (number | null)[][];
       if (!vals.length) continue;
-      q[r.id][c.entry.id] = KEYS.map((_, i) => {
+      q[r.id][c.entry.id] = [...KEYS, 'avg30'].map((_, i) => {
         const xs = vals.map((v) => v[i]).filter((x): x is number => x != null);
         return xs.length ? Math.round(xs.reduce((a, b) => a + b, 0) / xs.length / 10) * 10 : null;
       });

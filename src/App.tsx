@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORY_LABEL, regionNote, type CategoryId, type Region } from './data/catalog';
 import { loadHistory, loadPriceBook, loadShop } from './data/source';
-import { Q, type History, type Item, type PriceBook, type Shop } from './data/types';
+import { CHEAP_RATIO, Q, type History, type Item, type PriceBook, type Shop } from './data/types';
 import { KimjangCard, isKimjangSeason } from './Kimjang';
 import { ShopStrip, productsFor } from './Shop';
 import { ICONS, ICON_OF } from './icons';
@@ -9,14 +9,15 @@ import { BANNER_AD_ID, attachBanner, getItem, setItem, shareText, track } from '
 
 type Compare = 'day' | 'week';
 type Sort = 'basic' | 'down' | 'up';
-type Filter = CategoryId | 'all' | 'season';
-type Row = Item & { price: number; prev: number | null; diff: number; pct: number; inSeason: boolean };
+type Filter = CategoryId | 'all' | 'season' | 'cheap';
+type Row = Item & { price: number; prev: number | null; diff: number; pct: number; inSeason: boolean; avg30: number | null; cheap: boolean };
 
 const KEYS = { favs: 'jb.favs', region: 'jb.region', compare: 'jb.compare', qty: 'jb.qty' };
 const COMPARE_LABEL: Record<Compare, string> = { day: '어제', week: '지난주' };
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: '전체' },
   { id: 'season', label: '🍂 제철' },
+  { id: 'cheap', label: '💸 평소보다 싸요' },
   ...(Object.entries(CATEGORY_LABEL) as [CategoryId, string][]).map(([id, label]) => ({ id, label })),
 ];
 
@@ -135,6 +136,7 @@ export default function App() {
         const price = q[Q.now]!;
         const prev = q[compare === 'day' ? Q.d1 : Q.w1];
         const diff = prev ? price - prev : 0;
+        const avg30 = q[Q.avg30] ?? null;
         return {
           ...it,
           price,
@@ -142,6 +144,8 @@ export default function App() {
           diff,
           pct: prev ? (diff / prev) * 100 : 0,
           inSeason: !!it.season?.includes(month),
+          avg30,
+          cheap: !!avg30 && price <= avg30 * CHEAP_RATIO,
         };
       });
   }, [book, region, compare, month]);
@@ -180,7 +184,7 @@ export default function App() {
   };
   const seasonRows = rows.filter((r) => r.inSeason);
   const listRows = rows
-    .filter((r) => (filter === 'all' ? true : filter === 'season' ? r.inSeason : r.cat === filter))
+    .filter((r) => (filter === 'all' ? true : filter === 'season' ? r.inSeason : filter === 'cheap' ? r.cheap : r.cat === filter))
     .filter((r) => matches(r.name, query))
     .sort((a, b) => (sort === 'down' ? a.pct - b.pct : sort === 'up' ? b.pct - a.pct : 0));
 
@@ -219,6 +223,7 @@ export default function App() {
         <b>
           {r.name}
           {r.inSeason && <i className="season">제철</i>}
+          {r.cheap && <i className="cheap">평소보다 싸요</i>}
         </b>
         <small>{r.unit}</small>
       </span>
@@ -410,8 +415,15 @@ export default function App() {
             )}
           </div>
           <div className="cats">
-            {FILTERS.map((c) => (
-              <button key={c.id} className={filter === c.id ? 'on' : ''} onClick={() => setFilter(c.id)}>
+            {FILTERS.filter((c) => c.id !== 'cheap' || rows.some((r) => r.cheap)).map((c) => (
+              <button
+                key={c.id}
+                className={filter === c.id ? 'on' : ''}
+                onClick={() => {
+                  setFilter(c.id);
+                  if (c.id === 'cheap') track('cheap_filter_opened', { region, count: rows.filter((r) => r.cheap).length });
+                }}
+              >
                 {c.label}
               </button>
             ))}
@@ -591,6 +603,8 @@ function Detail({
     { label: '한 달 전', v: quote[Q.m1] },
     { label: '작년 이맘때', v: quote[Q.y1] },
   ];
+  const avg30 = quote[Q.avg30] ?? null;
+  const avgPct = avg30 ? ((last - avg30) / avg30) * 100 : 0;
 
   // 매일 기록이 쌓였으면 그걸로, 아직 없으면 한 달 전·2주 전·1주 전·어제·오늘 값으로 그려요
   const daily = hist?.points[row.id] ?? [];
@@ -627,6 +641,7 @@ function Detail({
             <h2>
               {row.name} <small>{row.unit}</small>
               {row.inSeason && <i className="season">제철</i>}
+              {row.cheap && <i className="cheap">평소보다 싸요</i>}
             </h2>
             <p className="date">{regionName} 평균 시세</p>
           </div>
@@ -666,8 +681,18 @@ function Detail({
             <b className="up">{won(max)}</b>
           </div>
         </div>
+        {avg30 != null && (
+          <p className={`avgLine ${row.cheap ? 'cheap' : ''}`}>
+            최근 30일 평균 <b>{won(avg30)}</b>
+            {Math.abs(avgPct) < 1
+              ? ' · 평소와 비슷해요'
+              : ` · 평소보다 ${pctText(avgPct)} ${avgPct < 0 ? '싸요' : '비싸요'}`}
+          </p>
+        )}
         <p className="tipLine">
-          {last <= min * 1.03
+          {row.cheap
+            ? '💡 30일 평균보다 싸요. 사기 좋은 때예요.'
+            : last <= min * 1.03
             ? '💡 최근 중 가장 싼 편이에요. 사기 좋은 때예요.'
             : last >= max * 0.97
               ? '💡 최근 중 비싼 편이에요. 급하지 않다면 조금 기다려 보세요.'
