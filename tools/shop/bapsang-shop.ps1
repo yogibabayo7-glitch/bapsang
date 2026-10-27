@@ -119,7 +119,7 @@ foreach ($g in $Groups.Keys) {
   $picked = New-Object System.Collections.ArrayList
   foreach ($kw in $Groups[$g]) {
     $hits = @($food | Where-Object { $_.name -like "*$kw*" } | Sort-Object level | Select-Object -First 2)
-    foreach ($h in $hits) { if (-not ($picked | Where-Object { $_.id -eq $h.id })) { [void]$picked.Add($h) } }
+    foreach ($hit in $hits) { if (-not ($picked | Where-Object { $_.id -eq $hit.id })) { [void]$picked.Add($hit) } }
     if ($picked.Count -ge 5) { break }
   }
   $items = New-Object System.Collections.ArrayList
