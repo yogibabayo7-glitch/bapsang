@@ -565,3 +565,12 @@ h2 {
   margin: 22px 0 10px;
   color: var(--g700);
 }
+
+/* 배너 광고 자리 */
+.banner {
+  margin: 0 0 12px;
+  min-height: 0;
+}
+.banner:empty {
+  margin: 0;
+}

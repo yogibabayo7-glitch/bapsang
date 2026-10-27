@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORY_LABEL, regionNote, type CategoryId, type Region } from './data/catalog';
 import { loadHistory, loadPriceBook } from './data/source';
 import { Q, type History, type Item, type PriceBook } from './data/types';
-import { getItem, setItem, shareText, track } from './platform';
+import { BANNER_AD_ID, attachBanner, getItem, setItem, shareText, track } from './platform';
 
 type Compare = 'day' | 'week';
 type Sort = 'basic' | 'down' | 'up';
@@ -331,6 +331,8 @@ export default function App() {
           </ul>
         </section>
 
+        <Banner />
+
         <button
           className="btn full"
           onClick={async () => {
@@ -402,6 +404,16 @@ export default function App() {
       {toast && <div className="toast">{toast}</div>}
     </div>
   );
+}
+
+// 토스 배너 광고 자리
+function Banner() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (ref.current) return attachBanner(ref.current);
+  }, []);
+  if (!BANNER_AD_ID) return null;
+  return <div className="banner" ref={ref} />;
 }
 
 const histCache = new Map<string, History | null>();
@@ -522,6 +534,7 @@ function Detail({
               ? '💡 최근 중 비싼 편이에요. 급하지 않다면 조금 기다려 보세요.'
               : '💡 최근 평균 수준이에요.'}
         </p>
+        <Banner />
         <button className="btn full" onClick={onClose}>
           닫기
         </button>

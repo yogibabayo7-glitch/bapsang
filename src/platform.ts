@@ -1,5 +1,5 @@
 // 토스 SDK 연결부: 저장소, 공유, 이벤트 기록
-import { Analytics, Storage, loadFullScreenAd, share } from '@apps-in-toss/web-framework';
+import { Analytics, Storage, TossAds, loadFullScreenAd, share } from '@apps-in-toss/web-framework';
 
 function inToss(): boolean {
   try {
@@ -32,6 +32,30 @@ export async function setItem(key: string, value: string): Promise<void> {
   try {
     localStorage.setItem(key, value);
   } catch {}
+}
+
+// ── 배너 광고 (토스가 광고를 채워줘요) ──
+// .env의 VITE_BANNER_AD_ID에 콘솔에서 받은 광고 그룹 ID를 넣어요. 비어 있으면 광고 자리를 안 만들어요.
+export const BANNER_AD_ID: string = import.meta.env.VITE_BANNER_AD_ID ?? '';
+let adsInitialized = false;
+
+export function attachBanner(el: HTMLElement): () => void {
+  if (!BANNER_AD_ID) return () => {};
+  try {
+    if (!TossAds.attachBanner.isSupported()) return () => {};
+    if (!adsInitialized && TossAds.initialize.isSupported()) {
+      adsInitialized = true;
+      TossAds.initialize({});
+    }
+    const banner = TossAds.attachBanner(BANNER_AD_ID, el, { theme: 'light', variant: 'card' });
+    return () => {
+      try {
+        banner?.destroy();
+      } catch {}
+    };
+  } catch {
+    return () => {};
+  }
 }
 
 export async function shareText(message: string): Promise<boolean> {
