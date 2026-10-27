@@ -6,7 +6,11 @@
 - **오늘밥상물가** `bapsang-price` — 이 저장소(github.com/yogibabayo7-glitch/bapsang). KAMIS 소매 시세를 날씨처럼 보여줌.
   - 출시: v0.1(10/27). v0.3(장바구니+그림) 검토 중. v0.4(김장 계산기+토스쇼핑 카드+국산 재료+배추 종류별 보기+평소보다 싸요 배지) — 10/27 19:16 .ait 다시 빌드해 사장님께 전달함(배지 + 메인 목록·상세 '국산' 표시 포함), v0.3 출시 후 올릴 예정.
   - 빌드: `npm run build` → `bapsang-price.ait`. 미리보기: `npx vite build --base ./ --outDir docs/preview --emptyOutDir`.
-  - 배너 광고 ID 아직 없음(`.env` `VITE_BANNER_AD_ID`).
+  - 광고 3종 코드 준비 완료(10/27 19:40), ID만 비어 있음 → `.env`에 넣고 다시 빌드하면 켜져요.
+    - `VITE_BANNER_AD_ID` 배너: 메인 목록 아래·품목 상세 아래.
+    - `VITE_INTERSTITIAL_AD_ID` 전면: 품목 상세를 3번 닫을 때마다 1번, 최소 3분 간격, 미리 받아 둔 광고만(앱 켤 때는 안 나옴). 이벤트 `interstitial_shown`.
+    - `VITE_REWARD_AD_ID` 보상형: 품목 상세 "📍 다른 지역은 얼마일까?" 버튼 → 광고 끝까지 보면 시·도 17곳 오늘 가격 비교(싼 순, 우리 지역 파란색). 광고 못 불러오면 그냥 열어 줌, 중간에 닫으면 안 열림. 한 번 열면 앱 끌 때까지 그 품목은 광고 없이. ID 비면 버튼 숨김. 이벤트 `compare_regions_tapped`, `compare_regions_unlocked`.
+    - 코드: `src/platform.ts`(preloadAds·maybeShowInterstitial·showRewarded), `src/App.tsx`(RegionCompare).
 - **밥값 챌린지** `babgap-challenge` — 소스는 이 저장소에 없음(작업 컨테이너의 /home/claude/babgap-challenge, 재구성본). v1.3(토스 적금 보러 가기 버튼, 링크 https://toss.im/_m/7VUPezk2) 검토 중.
 
 ## 데이터 파이프라인
@@ -38,6 +42,6 @@
 
 ## 다음 할 일
 1. ✅ 10/27 19:06 수동 수집으로 확인: 김장 재료 13종 모두 국산 품종으로 수집(깐마늘·생강·고춧가루는 '국산' 품종, 배추는 '여름(고랭지)'), 30일 평균 104개 중 100개 계산·배지 대상 22개. (Action 로그는 작업 컨테이너에서 못 받아서 결과 파일로 확인함) (tools/shop 첫 실행 완료: 김장12·배추30·채소12·과일12·고기12·생선12·곡물12·양념12, shop.json 업로드됨. 내일 09:40 자동 실행 기록 shop-log.txt 확인)
-2. 보상형 광고(밥값: 연속 기록 지키기 / 밥상물가: 지역 비교), 배너 추가, 전면 광고 — 광고 그룹 ID 받으면.
+2. 광고: 밥상물가는 코드 완료 → 콘솔에서 광고 그룹 ID 3개(배너·전면·보상형) 받으면 `.env`에 넣고 `npm run build`. 밥값 챌린지 보상형(연속 기록 지키기)은 아직.
 3. 10/28: 오늘밥상물가 핵심 지표에 `item_detail_viewed` 대표 전환 등록.
 4. v0.3 출시되면 받은 v0.4 .ait 업로드 (데이터는 자동, 화면 바뀐 것만 업로드 필요).

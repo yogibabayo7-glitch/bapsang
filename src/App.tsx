@@ -5,7 +5,7 @@ import { CHEAP_RATIO, Q, type History, type Item, type PriceBook, type Shop } fr
 import { KimjangCard, isKimjangSeason } from './Kimjang';
 import { ShopStrip, productsFor } from './Shop';
 import { ICONS, ICON_OF } from './icons';
-import { BANNER_AD_ID, attachBanner, getItem, setItem, shareText, track } from './platform';
+import { BANNER_AD_ID, REWARD_AD_ID, attachBanner, getItem, maybeShowInterstitial, preloadAds, setItem, shareText, showRewarded, track } from './platform';
 
 type Compare = 'day' | 'week';
 type Sort = 'basic' | 'down' | 'up';
@@ -118,6 +118,7 @@ export default function App() {
       setBook(b);
       track('price_viewed', { region: r || 'all' });
       loadShop().then(setShop);
+      preloadAds();
     })();
   }, []);
 
@@ -544,10 +545,14 @@ export default function App() {
           quote={book.q[region][d.id]}
           region={region}
           regionName={regionLabel}
+          book={book}
           shop={shop}
           fav={favs.includes(d.id)}
           onFav={() => toggleFav(d.id)}
-          onClose={() => setDetail(null)}
+          onClose={() => {
+            setDetail(null);
+            maybeShowInterstitial();
+          }}
         />
       )}
 
@@ -573,6 +578,7 @@ function Detail({
   quote,
   region,
   regionName,
+  book,
   shop,
   fav,
   onFav,
@@ -582,6 +588,7 @@ function Detail({
   quote: (number | null)[];
   region: string;
   regionName: string;
+  book: PriceBook;
   shop: Shop | null;
   fav: boolean;
   onFav: () => void;
@@ -702,12 +709,72 @@ function Detail({
               ? '💡 최근 중 비싼 편이에요. 급하지 않다면 조금 기다려 보세요.'
               : '💡 최근 평균 수준이에요.'}
         </p>
+        <RegionCompare book={book} row={row} region={region} />
         <ShopStrip shop={shop} items={productsFor(shop, row.name, row.cat)} title={`🛍️ 토스쇼핑에서 ${row.name} 보기`} from="detail" />
         <Banner />
         <button className="btn full" onClick={onClose}>
           닫기
         </button>
       </div>
+    </div>
+  );
+}
+
+// 같은 품목의 시·도별 오늘 가격 (보상형 광고를 보면 열려요)
+const unlockedCompare = new Set<string>(); // 한 번 열면 앱을 끌 때까지 그 품목은 다시 광고 없이 보여요
+
+function RegionCompare({ book, row, region }: { book: PriceBook; row: Row; region: string }) {
+  const [open, setOpen] = useState(unlockedCompare.has(row.id));
+  const [busy, setBusy] = useState(false);
+  if (!REWARD_AD_ID) return null;
+
+  const list = book.regions
+    .filter((r) => r.kind === 'sido')
+    .map((r) => ({ r, v: book.q[r.id]?.[row.id]?.[Q.now] ?? null }))
+    .filter((x): x is { r: Region; v: number } => x.v != null)
+    .sort((a, b) => a.v - b.v);
+  if (list.length < 3) return null;
+
+  const here = book.regions.find((r) => r.id === region);
+  const hereId = here?.kind === 'city' ? here.parent : region;
+  const lo = list[0].v;
+  const hi = list[list.length - 1].v;
+
+  const unlock = async () => {
+    if (busy) return;
+    setBusy(true);
+    track('compare_regions_tapped', { item: row.id });
+    const ok = await showRewarded();
+    setBusy(false);
+    if (!ok) return;
+    unlockedCompare.add(row.id);
+    track('compare_regions_unlocked', { item: row.id });
+    setOpen(true);
+  };
+
+  if (!open) {
+    return (
+      <button className="btn full ghost compareBtn" onClick={unlock} disabled={busy}>
+        📍 다른 지역은 얼마일까? <small>광고 보고 비교하기</small>
+      </button>
+    );
+  }
+
+  return (
+    <div className="compare">
+      <h3 className="subhead">📍 지역별 오늘 {row.name} 가격</h3>
+      <ul>
+        {list.map(({ r, v }) => (
+          <li key={r.id} className={r.id === hereId ? 'here' : ''}>
+            <span className="cName">{r.name}{r.id === hereId ? ' · 우리 지역' : ''}</span>
+            <span className="cBar">
+              <i style={{ width: `${hi > lo ? 20 + ((v - lo) / (hi - lo)) * 80 : 100}%` }} />
+            </span>
+            <b className={v === lo ? 'down' : v === hi ? 'up' : ''}>{won(v)}</b>
+          </li>
+        ))}
+      </ul>
+      <p className="foot">가장 싼 {josa(list[0].r.name, '과', '와')} 가장 비싼 {list[list.length - 1].r.name}의 차이는 {won(hi - lo)}이에요.</p>
     </div>
   );
 }

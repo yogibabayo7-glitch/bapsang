@@ -1,5 +1,5 @@
 // 토스 SDK 연결부: 저장소, 공유, 이벤트 기록
-import { Analytics, Device, Storage, TossAds, loadFullScreenAd, share } from '@apps-in-toss/web-framework';
+import { Analytics, Device, Storage, TossAds, loadFullScreenAd, share, showFullScreenAd } from '@apps-in-toss/web-framework';
 
 function inToss(): boolean {
   try {
@@ -58,6 +58,100 @@ export function attachBanner(el: HTMLElement): () => void {
   }
 }
 
+// ── 전면 광고 · 보상형 광고 ──
+// .env의 VITE_INTERSTITIAL_AD_ID(전면), VITE_REWARD_AD_ID(보상형)에 콘솔 광고 그룹 ID를 넣어요.
+// 비어 있으면 그 광고는 아예 안 불러요(보상형이 비면 '다른 지역 비교' 버튼도 숨겨요).
+export const INTERSTITIAL_AD_ID: string = import.meta.env.VITE_INTERSTITIAL_AD_ID ?? '';
+export const REWARD_AD_ID: string = import.meta.env.VITE_REWARD_AD_ID ?? '';
+
+const adReady = new Set<string>();
+const adLoading = new Set<string>();
+
+function preloadAd(id: string): void {
+  if (!id || adReady.has(id) || adLoading.has(id)) return;
+  try {
+    if (!loadFullScreenAd.isSupported()) return;
+    adLoading.add(id);
+    loadFullScreenAd({
+      options: { adGroupId: id },
+      onEvent: (e) => {
+        if (e.type === 'loaded') {
+          adLoading.delete(id);
+          adReady.add(id);
+        }
+      },
+      onError: () => {
+        adLoading.delete(id);
+      },
+    });
+  } catch {
+    adLoading.delete(id);
+  }
+}
+
+// 앱 시작 때 한 번: 광고를 미리 받아 둬요 (보여주는 건 나중에)
+export function preloadAds(): void {
+  preloadAd(INTERSTITIAL_AD_ID);
+  preloadAd(REWARD_AD_ID);
+}
+
+type ShowResult = 'rewarded' | 'closed' | 'unavailable';
+
+function showAd(id: string): Promise<ShowResult> {
+  return new Promise((resolve) => {
+    if (!id || !adReady.has(id)) {
+      preloadAd(id);
+      resolve('unavailable');
+      return;
+    }
+    adReady.delete(id);
+    let rewarded = false;
+    let done = false;
+    const finish = (r: ShowResult) => {
+      if (done) return;
+      done = true;
+      preloadAd(id); // 다음 번을 위해 다시 받아 둬요
+      resolve(r);
+    };
+    try {
+      showFullScreenAd({
+        options: { adGroupId: id },
+        onEvent: (e) => {
+          if (e.type === 'userEarnedReward') rewarded = true;
+          if (e.type === 'dismissed') finish(rewarded ? 'rewarded' : 'closed');
+          if (e.type === 'failedToShow') finish('unavailable');
+        },
+        onError: () => finish('unavailable'),
+      });
+    } catch {
+      finish('unavailable');
+    }
+  });
+}
+
+// 전면 광고: 품목 상세를 3번 닫을 때마다 한 번, 그리고 최소 3분 간격. 앱 켜자마자는 안 나와요.
+const INTERSTITIAL_EVERY = 3;
+const INTERSTITIAL_GAP_MS = 3 * 60 * 1000;
+let detailCloses = 0;
+let lastInterstitial = 0;
+
+export function maybeShowInterstitial(): void {
+  if (!INTERSTITIAL_AD_ID) return;
+  detailCloses += 1;
+  if (detailCloses % INTERSTITIAL_EVERY !== 0) return;
+  if (Date.now() - lastInterstitial < INTERSTITIAL_GAP_MS) return;
+  if (!adReady.has(INTERSTITIAL_AD_ID)) return;
+  lastInterstitial = Date.now();
+  track('interstitial_shown');
+  void showAd(INTERSTITIAL_AD_ID);
+}
+
+// 보상형 광고: 끝까지 보면 true. 광고를 못 불러온 경우에도 기능은 열어 줘요(사용자 잘못이 아니니까).
+export async function showRewarded(): Promise<boolean> {
+  const r = await showAd(REWARD_AD_ID);
+  return r !== 'closed';
+}
+
 export async function shareText(message: string): Promise<boolean> {
   try {
     await share({ message });
@@ -83,7 +177,10 @@ export type TrackEvent =
   | 'cabbage_opened' // 배추 종류별 보기 열기
   | 'cabbage_kind_selected' // 배추 산지·종류 칩 누름
   | 'cheap_filter_opened' // "평소보다 싸요" 필터 누름
-  | 'shop_clicked'; // 토스쇼핑 상품 누름 (보상 없음)
+  | 'shop_clicked' // 토스쇼핑 상품 누름 (보상 없음)
+  | 'compare_regions_tapped' // '다른 지역은 얼마?' 버튼 누름
+  | 'compare_regions_unlocked' // 보상형 광고 보고 지역 비교 열림
+  | 'interstitial_shown'; // 전면 광고 노출
 
 export function track(name: TrackEvent, params: Record<string, string | number> = {}): void {
   try {

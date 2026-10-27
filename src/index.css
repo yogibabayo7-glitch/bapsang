@@ -655,3 +655,63 @@ h2 {
 .cbGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .cbGrid .shopItem { flex: none; }
 .disclosure { margin: 10px 0 0; font-size: 12.5px; color: var(--g600, #6b7684); line-height: 1.4; }
+
+/* 지역별 비교 (보상형 광고) */
+.compareBtn {
+  margin-top: 12px;
+  background: var(--blue-weak);
+  color: var(--blue);
+}
+.compareBtn small {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--g500);
+  margin-top: 2px;
+}
+.compareBtn:disabled {
+  opacity: 0.6;
+}
+.compare {
+  margin-top: 16px;
+}
+.compare ul {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.compare li {
+  display: grid;
+  grid-template-columns: 92px 1fr 76px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  font-size: 14px;
+}
+.compare li.here .cName {
+  font-weight: 700;
+  color: var(--blue);
+}
+.compare .cName {
+  color: var(--g700);
+  white-space: nowrap;
+}
+.compare .cBar {
+  height: 8px;
+  background: var(--g100);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.compare .cBar i {
+  display: block;
+  height: 100%;
+  background: var(--g300);
+  border-radius: 4px;
+}
+.compare li.here .cBar i {
+  background: var(--blue);
+}
+.compare b {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
