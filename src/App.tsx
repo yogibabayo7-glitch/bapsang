@@ -443,8 +443,15 @@ function Detail({
 
   // 매일 기록이 쌓였으면 그걸로, 아직 없으면 한 달 전·2주 전·1주 전·어제·오늘 값으로 그려요
   const daily = hist?.points[row.id] ?? [];
-  const anchors = [quote[Q.m1], quote[Q.w2], quote[Q.w1], quote[Q.d1], last].filter((v): v is number => v != null);
-  const s = daily.length >= 5 ? daily.map((p) => p[1]) : anchors;
+  const anchorList: [string, number | null][] = [
+    ['한 달 전', quote[Q.m1]],
+    ['2주 전', quote[Q.w2]],
+    ['1주 전', quote[Q.w1]],
+    ['어제', quote[Q.d1]],
+    ['오늘', last],
+  ];
+  const anchors = anchorList.filter((a): a is [string, number] => a[1] != null);
+  const s = daily.length >= 5 ? daily.map((p) => p[1]) : anchors.map((a) => a[1]);
   const min = Math.min(...s);
   const max = Math.max(...s);
 
@@ -458,7 +465,7 @@ function Detail({
   ]);
   const path = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
   const trend = dir(((last - s[0]) / s[0]) * 100);
-  const startLabel = daily.length >= 5 ? daily[0][0].slice(5).replace('-', '.') : '한 달 전';
+  const startLabel = daily.length >= 5 ? daily[0][0].slice(5).replace('-', '.') : anchors[0][0];
 
   return (
     <div className="sheetBg" onClick={onClose}>

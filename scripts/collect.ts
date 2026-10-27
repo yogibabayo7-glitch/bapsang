@@ -236,6 +236,37 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
     if (filled) console.log(`1일 전 가격 ${filled}건을 ${prevFile.slice(0, 10)} 기록으로 채웠어요`);
   }
 
+  // 1개월 전 / 1년 전이 주말이라 비어 있으면, 그 날짜에서 가장 가까운 조사일 기록으로 채워요 (앞뒤 4일 안)
+  const snapDays = readdirSync(SNAP).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, 10));
+  const nearest = (target: string) => {
+    const t = new Date(target + 'T00:00:00Z').getTime();
+    let best: string | null = null;
+    let bestGap = 4.5 * 86400000;
+    for (const d of snapDays) {
+      const gap = Math.abs(new Date(d + 'T00:00:00Z').getTime() - t);
+      if (gap < bestGap) {
+        best = d;
+        bestGap = gap;
+      }
+    }
+    return best;
+  };
+  const shift = (months: number, years: number) => {
+    const d = new Date(day + 'T00:00:00Z');
+    d.setUTCFullYear(d.getUTCFullYear() + years, d.getUTCMonth() + months);
+    return d.toISOString().slice(0, 10);
+  };
+  for (const [idx, target] of [
+    [4, shift(-1, 0)],
+    [5, shift(0, -1)],
+  ] as [number, string][]) {
+    const near = nearest(target);
+    if (!near || near === day) continue;
+    const snapQ = (JSON.parse(readFileSync(`${SNAP}/${near}.json`, 'utf8')) as { q: Record<string, Record<string, number>> }).q;
+    for (const region of regionCodes)
+      for (const [id, v] of Object.entries(q[region])) if (v[idx] == null && snapQ[region]?.[id]) v[idx] = snapQ[region][id];
+  }
+
   // 전국·경기 등 묶음 지역 = 속한 조사 도시들의 평균
   for (const r of REGIONS) {
     if (!r.members) continue;
