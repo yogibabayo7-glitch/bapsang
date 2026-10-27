@@ -77,7 +77,8 @@ export type TrackEvent =
   | 'item_detail_viewed' // 품목 상세(그래프) 열람 → 대표 전환 후보
   | 'favorite_added' // 자주 찾는 품목 추가
   | 'region_changed'
-  | 'summary_shared';
+  | 'summary_shared'
+  | 'basket_opened';
 
 export function track(name: TrackEvent, params: Record<string, string | number> = {}): void {
   try {

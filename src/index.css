@@ -574,3 +574,17 @@ h2 {
 .banner:empty {
   margin: 0;
 }
+
+/* 우리집 장바구니 */
+.basket .listHead { margin-bottom: 8px; }
+.link { color: var(--blue); font-weight: 600; font-size: 14px; padding: 4px 2px; }
+.bTotal { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.bTotal b { font-size: 28px; letter-spacing: -0.5px; }
+.bTotal .chg { font-size: 16px; }
+.bTotal span { color: var(--g700); font-weight: 600; }
+.bSub { margin: 4px 0 0; color: var(--g700); font-size: 15px; }
+.bTip { margin: 12px 0 0; background: var(--g50); border-radius: 12px; padding: 10px 12px; font-size: 14px; word-break: keep-all; }
+.qtyRow { cursor: default; }
+.stepper { display: flex; align-items: center; gap: 10px; flex: none; }
+.stepper button { width: 34px; height: 34px; border-radius: 10px; background: var(--g100); font-size: 20px; font-weight: 700; color: var(--g700); }
+.stepper b { min-width: 22px; text-align: center; font-size: 17px; }

@@ -10,7 +10,7 @@ type Sort = 'basic' | 'down' | 'up';
 type Filter = CategoryId | 'all' | 'season';
 type Row = Item & { price: number; prev: number | null; diff: number; pct: number; inSeason: boolean };
 
-const KEYS = { favs: 'jb.favs', region: 'jb.region', compare: 'jb.compare' };
+const KEYS = { favs: 'jb.favs', region: 'jb.region', compare: 'jb.compare', qty: 'jb.qty' };
 const COMPARE_LABEL: Record<Compare, string> = { day: '어제', week: '지난주' };
 const FILTERS: { id: Filter; label: string }[] = [
   { id: 'all', label: '전체' },
@@ -90,18 +90,24 @@ export default function App() {
   const [detail, setDetail] = useState<string | null>(null);
   const [regionOpen, setRegionOpen] = useState(false);
   const [toast, setToast] = useState('');
+  const [qty, setQty] = useState<Record<string, number>>({});
+  const [basketOpen, setBasketOpen] = useState(false);
   const month = new Date().getMonth() + 1;
 
   useEffect(() => {
     (async () => {
-      const [b, f, r, c] = await Promise.all([
+      const [b, f, r, c, qn] = await Promise.all([
         loadPriceBook(),
         getItem(KEYS.favs),
         getItem(KEYS.region),
         getItem(KEYS.compare),
+        getItem(KEYS.qty),
       ]);
       try {
         if (f) setFavs(JSON.parse(f));
+      } catch {}
+      try {
+        if (qn) setQty(JSON.parse(qn));
       } catch {}
       if (r && b.regions.some((x) => x.id === r)) setRegion(r);
       if (c === 'day' || c === 'week') setCompare(c);
@@ -153,6 +159,21 @@ export default function App() {
   const bestBuys = [...downs].sort((a, b) => a.pct - b.pct).slice(0, 3);
   const biggestUp = [...ups].sort((a, b) => b.pct - a.pct)[0];
   const favRows = favs.map((id) => rows.find((r) => r.id === id)).filter(Boolean) as Row[];
+  // 우리집 장바구니: 고정한 품목 × 수량
+  const qtyOf = (id: string) => qty[id] ?? 1;
+  const basket = favRows.filter((r) => qtyOf(r.id) > 0);
+  const basketNow = basket.reduce((a, r) => a + r.price * qtyOf(r.id), 0);
+  const basketPrev = basket.reduce((a, r) => a + (r.prev ?? r.price) * qtyOf(r.id), 0);
+  const basketDiff = basketNow - basketPrev;
+  const basketPct = basketPrev ? (basketDiff / basketPrev) * 100 : 0;
+  const basketMover = [...basket]
+    .filter((r) => r.prev)
+    .sort((a, b) => Math.abs((b.price - b.prev!) * qtyOf(b.id)) - Math.abs((a.price - a.prev!) * qtyOf(a.id)))[0];
+  const changeQty = (id: string, delta: number) => {
+    const next = { ...qty, [id]: Math.max(0, Math.min(99, qtyOf(id) + delta)) };
+    setQty(next);
+    void setItem(KEYS.qty, JSON.stringify(next));
+  };
   const seasonRows = rows.filter((r) => r.inSeason);
   const listRows = rows
     .filter((r) => (filter === 'all' ? true : filter === 'season' ? r.inSeason : r.cat === filter))
@@ -283,6 +304,46 @@ export default function App() {
           </section>
         )}
 
+        <section className="card basket">
+          <div className="listHead">
+            <h2>🧺 우리집 장바구니</h2>
+            {favRows.length > 0 && (
+              <button
+                className="link"
+                onClick={() => {
+                  setBasketOpen(true);
+                  track('basket_opened', { items: favRows.length });
+                }}
+              >
+                수량 정하기
+              </button>
+            )}
+          </div>
+          {basket.length ? (
+            <>
+              <div className="bTotal">
+                <b>{won(basketNow)}</b>
+                <Change pct={basket.some((r) => r.prev) ? basketPct : null} diff={basketDiff} />
+              </div>
+              <p className="bSub">
+                {basket.length}개 품목 · {COMPARE_LABEL[compare]}보다{' '}
+                {dir(basketPct) === 'flat'
+                  ? '비슷해요'
+                  : `${won(Math.abs(basketDiff))} ${basketDiff > 0 ? '더 들어요' : '덜 들어요'}`}
+              </p>
+              {basketMover && dir(((basketMover.price - basketMover.prev!) / basketMover.prev!) * 100) !== 'flat' && (
+                <p className="bTip">
+                  {basketMover.price > basketMover.prev! ? '📈' : '📉'} {josa(basketMover.name, '이', '가')} 가장 크게{' '}
+                  {basketMover.price > basketMover.prev! ? '올랐어요' : '내렸어요'} (
+                  {won(Math.abs(basketMover.price - basketMover.prev!) * qtyOf(basketMover.id))})
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="hint">아래 품목 옆 ☆를 누르면 우리집 장바구니에 담겨요. 매일 장바구니 값이 얼마나 오르고 내렸는지 알려드려요.</p>
+          )}
+        </section>
+
         <section className="card">
           <h2>⭐ 자주 찾는 품목</h2>
           {favRows.length ? (
@@ -357,7 +418,8 @@ export default function App() {
               (r) => `${r.emoji} ${r.name}(${r.unit}) ${won(r.price)} ${arrow(r.pct)}${pctText(r.pct)}`,
             );
             const ok = await shareText(
-              `오늘밥상물가 · ${dateLabel(book.date)} ${regionName} 평균 시세\n${lines.join('\n')}`,
+              `오늘밥상물가 · ${dateLabel(book.date)} ${regionName} 평균 시세\n${lines.join('\n')}` +
+                (basket.length ? `\n🧺 우리집 장바구니 ${won(basketNow)} (${COMPARE_LABEL[compare]}보다 ${basketDiff >= 0 ? '+' : '-'}${won(Math.abs(basketDiff))})` : ''),
             );
             if (ok) track('summary_shared');
             showToast(ok ? '공유할 준비가 됐어요' : '공유하지 못했어요');
@@ -371,6 +433,48 @@ export default function App() {
           평일에만 조사해서 주말에는 마지막 조사일 시세를 보여줘요.
         </p>
       </div>
+
+      {basketOpen && (
+        <div className="sheetBg" onClick={() => setBasketOpen(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <h2>우리집 장바구니 수량</h2>
+            <p className="hint" style={{ marginBottom: 12 }}>
+              일주일에 보통 사는 양으로 맞춰 두면 좋아요. 0으로 하면 계산에서 빠져요.
+            </p>
+            <ul className="list">
+              {favRows.map((r) => (
+                <li key={r.id} className="item qtyRow">
+                  <span className="emo">
+                    <ItemIcon item={r} />
+                  </span>
+                  <span className="nm">
+                    <b>{r.name}</b>
+                    <small>
+                      {r.unit} · {won(r.price)}
+                    </small>
+                  </span>
+                  <span className="stepper">
+                    <button onClick={() => changeQty(r.id, -1)} aria-label={`${r.name} 빼기`}>
+                      −
+                    </button>
+                    <b>{qtyOf(r.id)}</b>
+                    <button onClick={() => changeQty(r.id, 1)} aria-label={`${r.name} 더하기`}>
+                      +
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="bTotal" style={{ marginTop: 12 }}>
+              <span>합계</span>
+              <b>{won(basketNow)}</b>
+            </div>
+            <button className="btn full" style={{ marginTop: 12 }} onClick={() => setBasketOpen(false)}>
+              완료
+            </button>
+          </div>
+        </div>
+      )}
 
       {regionOpen && (
         <div className="sheetBg" onClick={() => setRegionOpen(false)}>
