@@ -306,6 +306,10 @@ h2 {
 .btn.full {
   width: 100%;
 }
+.btn.ghost {
+  background: var(--blue-weak);
+  color: var(--blue);
+}
 .foot {
   color: var(--g500);
   font-size: 12px;
@@ -659,8 +663,6 @@ h2 {
 /* 지역별 비교 (보상형 광고) */
 .compareBtn {
   margin-top: 12px;
-  background: var(--blue-weak);
-  color: var(--blue);
 }
 .compareBtn small {
   display: block;
