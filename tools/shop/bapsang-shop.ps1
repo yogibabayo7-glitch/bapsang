@@ -171,7 +171,7 @@ try { $pages.fresh = (Api 'POST' '/links' @{ landingType = 'FRESH_FOOD'; publish
 try { $pages.deals = (Api 'POST' '/links' @{ landingType = 'SHOPPING_DEALS'; publisherId = $cfg.publisherId }).shortUrl } catch { Log "특가 지면 링크 실패: $_" }
 
 $total = ($out.Keys | Where-Object { $Shared -notcontains $_ } | ForEach-Object { $out[$_].Count } | Measure-Object -Sum).Sum
-if ($total -lt 5) { Log "상품이 너무 적어서($total개) 이번엔 올리지 않아요."; exit 1 }
+if ($total -lt 5) { Log "상품이 너무 적어서($($total)개) 이번엔 올리지 않아요."; exit 1 }
 
 $shop = [ordered]@{
   updatedAt  = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
@@ -188,11 +188,11 @@ $api = "https://api.github.com/repos/$Repo/contents/docs/data/shop.json"
 $sha = $null
 try { $sha = (Read-Json (Invoke-WebRequest -UseBasicParsing -UserAgent 'bapsang-shop' -Uri $api -Headers $GH)).sha } catch {}
 $body = [ordered]@{
-  message = "토스쇼핑 추천 상품 갱신 ($total개)"
+  message = "토스쇼핑 추천 상품 갱신 ($($total)개)"
   content = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($json))
 }
 if ($sha) { $body.sha = $sha }
 try {
   Invoke-WebRequest -UseBasicParsing -UserAgent 'bapsang-shop' -Method Put -Uri $api -Headers $GH -ContentType 'application/json' -Body ([Text.Encoding]::UTF8.GetBytes(($body | ConvertTo-Json -Compress))) | Out-Null
-  Log "완료! 상품 $total개를 올렸어요."
+  Log "완료! 상품 $($total)개를 올렸어요."
 } catch { Log "GitHub에 올리지 못했어요. githubToken을 확인해 주세요. ($($_.Exception.Message))"; exit 1 }
