@@ -16,7 +16,7 @@
 
 ## 토스쇼핑 쉐어링크
 - 기본 수수료 5%, 클릭 후 24시간 마지막 클릭 기준. 대가성 문구 필수, 클릭 보상 금지, 썸네일 가공 금지.
-- Open API 승인됨(연동 중). 출발지 IP 등록 필요 → `tools/shop/` PowerShell 도구를 사장님 PC에서 매일 09:40 실행 → `docs/data/shop.json` 업로드. (아직 사장님 PC 설치 전, 실제 실행 검증 전)
+- Open API 승인됨(연동 중). 출발지 IP 등록 필요 → `tools/shop/` PowerShell 도구를 사장님 PC에서 매일 09:40 실행 → `docs/data/shop.json` 업로드. (10/27 사장님 PC 설치·첫 실행 성공: 문서\밥상물가\shop, 작업 스케줄러 'BapsangShop' 매일 09:40, 출발지 IP 116.41.104.36 등록, GitHub 토큰 bapsang-shop 2027-10-26 만료 → Regenerate로 갱신)
 - 앱: `src/Shop.tsx`(상품 카드, productsFor, domesticOnly, 배추 분류), `src/Kimjang.tsx`(김장 계산기, 20포기 기준 재료 12종), `src/Cabbage.tsx`(배추 종류별 보기 시트).
 
 ## 김장 재료 국산만 (10/27 완료)
@@ -30,7 +30,7 @@
 - 배추 상품이 2개 미만이면 버튼이 안 보여요 → shop.json이 올라와야 보임. PowerShell 스크립트는 문법 검사 도구가 없어 눈으로만 검토함 → 사장님 PC 첫 실행 때 shop-log.txt의 `cabbage : … 상품 N개` 확인.
 
 ## 다음 할 일
-1. 다음 수집 Action 로그에서 국산 품종 선택 확인 / 사장님 PC에 tools/shop 설치 후 첫 실행 확인.
+1. 다음 수집 Action 로그에서 국산 품종 선택 확인. (tools/shop 첫 실행 완료: 김장12·배추30·채소12·과일12·고기12·생선12·곡물12·양념12, shop.json 업로드됨. 내일 09:40 자동 실행 기록 shop-log.txt 확인)
 2. 보상형 광고(밥값: 연속 기록 지키기 / 밥상물가: 지역 비교), 배너 추가, 전면 광고 — 광고 그룹 ID 받으면.
 3. 10/28: 오늘밥상물가 핵심 지표에 `item_detail_viewed` 대표 전환 등록.
 4. ③ "평소보다 싸요" 배지(30일 평균).
