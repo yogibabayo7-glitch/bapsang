@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CATEGORY_LABEL, regionNote, type CategoryId, type Region } from './data/catalog';
 import { loadHistory, loadPriceBook } from './data/source';
 import { Q, type History, type Item, type PriceBook } from './data/types';
+import { ICONS, ICON_OF } from './icons';
 import { BANNER_AD_ID, attachBanner, getItem, setItem, shareText, track } from './platform';
 
 type Compare = 'day' | 'week';
@@ -51,22 +52,20 @@ function matches(name: string, query: string) {
   return n.includes(q) || ([...q].every((ch) => CHO.includes(ch)) && chosung(n).includes(q));
 }
 
-// 이모지가 없는 품목은 직접 그린 그림으로 보여줘요
-const CUSTOM_ICONS: Record<string, ReactNode> = {
-  // 참깨: 홀쭉한 물방울 모양 깨알 세 알
-  sesame: (
-    <svg viewBox="0 0 40 40" width="1.1em" height="1.1em" aria-hidden="true" style={{ verticalAlign: '-0.15em' }}>
-      <g fill="#EBD39A" stroke="#A9813B" strokeWidth="1.8" strokeLinejoin="round">
-        <path d="M11 6 C14 10 16 16 15.5 21 C15 26 7 26 6.5 21 C6 16 8 10 11 6 Z" transform="rotate(-28 11 16)" />
-        <path d="M29 7 C32 11 34 17 33.5 22 C33 27 25 27 24.5 22 C24 17 26 11 29 7 Z" transform="rotate(26 29 17)" />
-        <path d="M20 13 C23.5 18 25.5 25 25 30.5 C24.5 36 15.5 36 15 30.5 C14.5 25 16.5 18 20 13 Z" />
-      </g>
-    </svg>
-  ),
-};
-
+// 이모지가 실제 모습과 다른 품목은 직접 그린 그림으로 보여줘요
 function ItemIcon({ item }: { item: Item }) {
-  return <>{CUSTOM_ICONS[item.id] ?? item.emoji}</>;
+  const key = ICON_OF[item.id];
+  if (!key) return <>{item.emoji}</>;
+  return (
+    <svg
+      viewBox="0 0 40 40"
+      width="1.15em"
+      height="1.15em"
+      aria-hidden="true"
+      style={{ verticalAlign: '-0.18em' }}
+      dangerouslySetInnerHTML={{ __html: ICONS[key] }}
+    />
+  );
 }
 
 function Change({ pct, diff }: { pct: number | null; diff?: number }) {
