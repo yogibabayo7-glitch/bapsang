@@ -63,10 +63,16 @@ export const ICONS: Record<string, string> = {
       <path d="M12 22 l-4 -1 l2 -3 l3 2z"/><path d="M28 22 l4 -1 l-2 -3 l-3 2z"/>
     </g>`,
   'green-onion': `
-    <path d="M16 18 Q12 8 8 1 q4 0 8 8z" fill="#2E9E5B"/><path d="M20 17 Q22 7 27 1 q2 3 -3 10z" fill="#3DB36B"/>
-    <rect x="14.5" y="10" width="11" height="14" rx="5" fill="#4FBF73"/>
-    <rect x="14.5" y="19" width="11" height="17" rx="5" fill="#FAFAF2" stroke="#DDE3D3" stroke-width="0.8"/>
-    <path d="M16 36 l-2 3 M20 36 v3.5 M24 36 l2 3" stroke="#D9CFB0" stroke-width="1.2" stroke-linecap="round"/>`,
+    <g stroke-linecap="round" fill="none">
+      <path d="M30 11 L36 2" stroke="#2E9E5B" stroke-width="4"/>
+      <path d="M30 11 L39 7" stroke="#3DB36B" stroke-width="4"/>
+      <path d="M7.5 33.5 L22 19" stroke="#D6DCCB" stroke-width="10"/>
+      <path d="M7.5 33.5 L22 19" stroke="#FBFBF4" stroke-width="8.4"/>
+      <path d="M21 20 L31 10" stroke="#45B36B" stroke-width="8.4"/>
+      <path d="M19 22 L23 18" stroke="#9BD49A" stroke-width="8.4" stroke-linecap="butt"/>
+      <path d="M10 33 L21 22" stroke="#ECEFE2" stroke-width="1"/>
+    </g>
+    <path d="M5 35 l-3 1 M5.5 36 l-2 3 M7 36.5 l0 3.5 M8.5 36 l2 3" stroke="#CFC4A0" stroke-width="1.2" stroke-linecap="round"/>`,
   scallion: `
     <g stroke-linecap="round" fill="none">
       <path d="M13 34 Q12 18 8 3" stroke="#3DB36B" stroke-width="2.6"/><path d="M20 34 V2" stroke="#4CC07A" stroke-width="2.6"/><path d="M27 34 Q28 18 32 3" stroke="#3DB36B" stroke-width="2.6"/>
@@ -153,12 +159,14 @@ export const ICONS: Record<string, string> = {
     <path d="M5 16 q2 -8 14 -9 q14 0 17 9 q2 10 -9 16 q-12 5 -19 -2 q-5 -6 -3 -14z" fill="none" stroke="#FBEFE6" stroke-width="3"/>
     <path d="M10 15 q6 4 9 -1 q4 -4 9 0 M9 23 q7 2 11 -2 q5 -2 9 2" stroke="#FFF3EC" stroke-width="2.2" fill="none" stroke-linecap="round"/>`,
   chicken: `
-    <path d="M12 16 L7 6 q-1 -3 1.5 -3.5 q2.5 0 2.2 2.5 L15 14z" fill="#F3C4A0"/>
-    <path d="M28 16 L33 6 q1 -3 -1.5 -3.5 q-2.5 0 -2.2 2.5 L25 14z" fill="#F3C4A0"/>
-    <circle cx="7.6" cy="4" r="2" fill="#FBF4EA"/><circle cx="32.4" cy="4" r="2" fill="#FBF4EA"/>
-    <path d="M5 22 Q5 13 20 13 Q35 13 35 22 Q35 36 20 37 Q5 36 5 22 Z" fill="#F7D3B0" stroke="#E2AE84" stroke-width="1"/>
-    <path d="M10 18 q10 -4 20 0" stroke="#FBE6D2" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-    <path d="M20 16 v18" stroke="#E7B994" stroke-width="1" />`,
+    <path d="M27 24 Q37 16 36 6 Q31 12 29 12 Q33 6 30 2 Q27 9 25 12 Z" fill="#E9E4DA" stroke="#C9C2B5" stroke-width=".8"/>
+    <path d="M7 24 Q6 36 20 36 Q31 36 32 26 Q32 17 24 17 Q19 17 16 12 L14 9 Q10 9 9 13 Q8 18 7 24 Z" fill="#FFFFFF" stroke="#CFC8BC" stroke-width="1"/>
+    <path d="M12 26 Q18 30 26 26 Q22 32 14 30 Z" fill="#EFEAE1"/>
+    <path d="M11 6 q1 -3 3 -1 q1 -3 3 0 q2 -2 2 2 q-3 1 -8 -1z" fill="#E53935"/>
+    <path d="M9 12 L5 13.5 L9 15 Z" fill="#F4A21C"/>
+    <path d="M10 15 q-1 4 1.5 5 q1.5 -2 0 -5z" fill="#E53935"/>
+    <circle cx="12" cy="11.5" r="1.1" fill="#1d1d1d"/>
+    <path d="M17 36 v3 M23 36 v3 M15.5 39 h3 M21.5 39 h3" stroke="#F4A21C" stroke-width="1.4" stroke-linecap="round"/>`,
   // ── 수산 ──
   hairtail: `
     <path d="M3 33 Q14 31 24 21 Q31 13 38 3 Q36 13 28 22 Q17 34 4 36.5 Z" fill="#E6ECF2" stroke="#8D9CAE" stroke-width="1"/>
@@ -199,11 +207,11 @@ export const ICONS: Record<string, string> = {
     <path d="M9 30 Q12 20 20 13 Q27 8 31 8" stroke="#4A4F6E" stroke-width="1.6" fill="none"/>
     <path d="M13 31 Q18 24 26 18" stroke="#3B3F5A" stroke-width="1.2" fill="none"/>`,
   oyster: `
-    <path d="M4 22 Q4 8 18 6 Q34 4 36 16 Q38 30 22 34 Q6 36 4 22 Z" fill="#B9B6A6"/>
-    <path d="M7 21 Q8 11 19 10 Q31 9 32 18 Q33 28 21 30 Q9 31 7 21 Z" fill="#EEEAE0"/>
-    <path d="M10 20 Q12 13 20 13 Q28 13 29 19 Q29 26 20 27 Q11 27 10 20 Z" fill="#A9A6A0"/>
-    <path d="M12 20 Q14 16 20 16 Q26 16 27 20" stroke="#7F7C77" stroke-width="1.2" fill="none"/>
-    <path d="M4 22 Q4 8 18 6 Q34 4 36 16" stroke="#8D8A7A" stroke-width="1.2" fill="none"/>`,
+    <path d="M2 21 Q3 13 10 12 Q14 8 20 10 Q26 7 31 11 Q38 12 38 19 Q39 26 32 28 Q26 32 19 30 Q12 32 7 29 Q1 27 2 21 Z" fill="#A9A595" stroke="#7E7A6B" stroke-width="1"/>
+    <path d="M5 21 Q6 15 12 15 Q16 12 21 13.5 Q27 11 31 14.5 Q35 16 35 20 Q35 25 30 26 Q24 28.5 18 27 Q11 28.5 8 26 Q4 24.5 5 21 Z" fill="#F1EDE3"/>
+    <path d="M9 21 Q10 17 15 17 Q20 15 25 16.5 Q31 16.5 31 20.5 Q31 24 26 24.5 Q20 26 15 24.5 Q9 25 9 21 Z" fill="#B7B2AA"/>
+    <path d="M12 21 Q17 19 22 20 Q26 19.5 28 21" stroke="#8C8780" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    <path d="M3 18 q3 -2 5 -1 M33 12 q3 1 4 4 M14 31 q4 1 7 0" stroke="#8E8A79" stroke-width="1" fill="none"/>`,
   scallop: `
     <path d="M20 34 L4 16 Q10 4 20 4 Q30 4 36 16 Z" fill="#F29A6B"/>
     <g stroke="#D46E3E" stroke-width="1.6" fill="none"><path d="M20 34 L7 12"/><path d="M20 34 L11 8"/><path d="M20 34 L15.5 5.5"/><path d="M20 34 V4.5"/><path d="M20 34 L24.5 5.5"/><path d="M20 34 L29 8"/><path d="M20 34 L33 12"/></g>
@@ -225,6 +233,40 @@ export const ICONS: Record<string, string> = {
     <g stroke="#D9985C" stroke-width="2.2" stroke-linecap="round" fill="none">
       <path d="M14 26 Q12 32 9 37"/><path d="M17 26 Q16 32 15 38"/><path d="M20 26 V38"/><path d="M23 26 Q24 32 25 38"/><path d="M26 26 Q28 32 31 37"/>
     </g>`,
+  'cherry-tomato': `
+    <g>
+      <ellipse cx="14" cy="24" rx="8" ry="10" fill="#E8352B" transform="rotate(-12 14 24)"/>
+      <ellipse cx="11.5" cy="20" rx="2.2" ry="3.4" fill="#FF8A80" opacity=".7" transform="rotate(-12 11.5 20)"/>
+      <path d="M12.5 14.5 l-4 -2 l3.5 -0.3 l-0.8 -3.2 l2.6 2.4 l2.2 -2.6 l-0.2 3.4 l3.6 0.2 l-3.6 1.8 z" fill="#3E8E3A"/>
+      <ellipse cx="27" cy="27" rx="7.5" ry="9.5" fill="#D92E24" transform="rotate(14 27 27)"/>
+      <ellipse cx="25" cy="23.5" rx="2" ry="3" fill="#FF8A80" opacity=".65" transform="rotate(14 25 23.5)"/>
+      <path d="M28.5 18 l-3.6 -2.2 l3.4 -0.1 l-0.4 -3.2 l2.4 2.6 l2.4 -2.4 l-0.4 3.4 l3.4 0.4 l-3.6 1.6 z" fill="#3E8E3A"/>
+    </g>`,
+  'korean-melon': `
+    <ellipse cx="20" cy="21" rx="13" ry="17" fill="#F7C51E" transform="rotate(-20 20 21)"/>
+    <g stroke="#FFF6D2" stroke-width="2" fill="none" stroke-linecap="round" transform="rotate(-20 20 21)">
+      <path d="M20 5 V37"/><path d="M13.5 6.5 Q10 21 13.5 35.5"/><path d="M26.5 6.5 Q30 21 26.5 35.5"/><path d="M9 10 Q6 21 9 32"/><path d="M31 10 Q34 21 31 32"/>
+    </g>
+    <ellipse cx="20" cy="21" rx="13" ry="17" fill="none" stroke="#E0A800" stroke-width="1" transform="rotate(-20 20 21)"/>
+    <path d="M25.5 4.5 q2 -3 4 -3" stroke="#6B8E3A" stroke-width="1.6" fill="none" stroke-linecap="round"/>`,
+  'shine-muscat': `
+    <path d="M20 6 q1 -4 4 -5" stroke="#7A5A2E" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M22 4 q7 -3 11 1 q-6 3 -11 -1z" fill="#6FA43C"/>
+    <g fill="#C8E68A" stroke="#93BF4E" stroke-width=".9">
+      <circle cx="13" cy="11" r="4.6"/><circle cx="21" cy="10" r="4.6"/><circle cx="29" cy="12" r="4.6"/>
+      <circle cx="9.5" cy="18.5" r="4.6"/><circle cx="17.5" cy="18" r="4.6"/><circle cx="25.5" cy="18.5" r="4.6"/><circle cx="32" cy="20" r="4.2"/>
+      <circle cx="13" cy="26" r="4.6"/><circle cx="21" cy="26" r="4.6"/><circle cx="28.5" cy="27" r="4.4"/>
+      <circle cx="17" cy="33" r="4.4"/><circle cx="24.5" cy="34" r="4.2"/>
+    </g>
+    <g fill="#F2FADF" opacity=".9"><circle cx="11.5" cy="9.5" r="1.2"/><circle cx="19.5" cy="8.5" r="1.2"/><circle cx="16" cy="16.5" r="1.2"/><circle cx="24" cy="17" r="1.2"/><circle cx="19.5" cy="24.5" r="1.2"/><circle cx="15.5" cy="31.5" r="1.2"/></g>`,
+  'pork-leg': `
+    <path d="M6 10 Q4 4 12 3 Q22 2 27 9 L33 25 Q35 30 33 33 L25 34 Q24 30 21 27 Q14 22 9 17 Q6 14 6 10 Z" fill="#E9A07A"/>
+    <path d="M6 10 Q4 4 12 3 Q22 2 27 9" stroke="#C97852" stroke-width="1" fill="none"/>
+    <ellipse cx="11" cy="8" rx="5" ry="4" fill="#F7E6D8" stroke="#DCC1AC" stroke-width=".8"/>
+    <circle cx="11" cy="8" r="1.8" fill="#E8C8B0"/>
+    <path d="M14 12 Q20 13 25 18 M16 17 Q22 19 27 24" stroke="#F6C3A6" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <path d="M24 34 L25 38 Q27 39.5 29 38 L29 34 Z M29.5 34 L30 38 Q32 39.5 34 38 L33.5 33 Z" fill="#8B5A3C"/>
+    <path d="M24.5 34 H33.5" stroke="#B9774F" stroke-width="1.2"/>`,
   laver: `
     <rect x="9" y="5" width="25" height="25" rx="1.5" fill="#1F2B22" transform="rotate(8 21 17)"/>
     <rect x="6" y="9" width="25" height="25" rx="1.5" fill="#26352A"/>
@@ -254,10 +296,13 @@ export const ICON_OF: Record<string, string> = {
   sesame: 'sesame',
   'mung-bean': 'mung-bean',
   pear: 'pear',
+  'shine-muscat': 'shine-muscat',
+  'cherry-tomato': 'cherry-tomato',
+  'korean-melon': 'korean-melon',
   persimmon: 'persimmon',
   milk: 'milk',
   'pork-neck': 'pork-cut',
-  'pork-shoulder': 'pork-cut',
+  'pork-shoulder': 'pork-leg',
   chicken: 'chicken',
   hairtail: 'hairtail',
   saury: 'saury',
