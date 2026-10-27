@@ -2,7 +2,7 @@
 // 실행: KAMIS_CERT_KEY=... KAMIS_CERT_ID=... node scripts/collect.ts
 // 결과: docs/data/latest.json, docs/data/hist/{지역}.json  (GitHub Pages로 공개)
 //       data/snapshots/{날짜}.json                         (그래프용 기록)
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { CATALOG, DEFAULT_RANK, KAMIS_CATEGORY, REGIONS, SURVEY_CITIES, type CatalogEntry, type CategoryId } from '../src/data/catalog.ts';
 
 const BASE = 'https://www.kamis.or.kr/service/price/xml.do';
@@ -10,6 +10,7 @@ const CATS = ['100', '200', '300', '400', '500', '600'];
 const OUT = 'docs/data';
 const SNAP = 'data/snapshots';
 const HIST_DAYS = 60;
+const PAST = 'data/past'; // 한 달 전·1년 전 비교용 (그래프에는 안 써요)
 
 type Raw = Record<string, string | undefined>;
 type Fields = { now?: number; d1?: number; w1?: number; w2?: number; m1?: number; y1?: number };
@@ -236,8 +237,39 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
     if (filled) console.log(`1일 전 가격 ${filled}건을 ${prevFile.slice(0, 10)} 기록으로 채웠어요`);
   }
 
-  // 1개월 전 / 1년 전이 주말이라 비어 있으면, 그 날짜에서 가장 가까운 조사일 기록으로 채워요 (앞뒤 4일 안)
-  const snapDays = readdirSync(SNAP).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, 10));
+  // 1개월 전 / 1년 전이 비어 있으면, 그 날짜에서 가장 가까운 조사일 기록으로 채워요 (앞뒤 4일 안)
+  // 그런 기록이 아직 없으면 KAMIS에서 그날 가격을 직접 받아 data/past에 저장해 둬요
+  mkdirSync(PAST, { recursive: true });
+  const dirOf = (d: string) => (existsSync(`${SNAP}/${d}.json`) ? SNAP : PAST);
+  const listDays = () =>
+    [...readdirSync(SNAP), ...readdirSync(PAST)].filter((f) => f.endsWith('.json')).map((f) => f.slice(0, 10));
+  const fetchPast = async (target: string) => {
+    for (const off of [0, -1, 1, -2, 2, -3, 3]) {
+      const d = new Date(target + 'T00:00:00Z');
+      d.setUTCDate(d.getUTCDate() + off);
+      const pd = d.toISOString().slice(0, 10);
+      if (!isWeekday(pd)) continue;
+      const probe = ((await fetchRows('1101', '200', pd)) ?? []).map((r) => parseRow(r, '200')).filter((r) => r.now);
+      if (probe.length < 5) continue;
+      const pq: Record<string, Record<string, number>> = {};
+      for (const region of regionCodes) {
+        const rows: Row[] = [];
+        for (const cat of CATS) {
+          const raw = await fetchRows(region, cat, pd);
+          if (raw) rows.push(...raw.map((r) => parseRow(r, cat)));
+        }
+        pq[region] = {};
+        for (const c of chosen) {
+          const r = rows.find((x) => x.code === c.entry.code && x.kind === c.kind && x.rank === c.rank && x.now);
+          if (r?.now) pq[region][c.entry.id] = r.now;
+        }
+      }
+      writeFileSync(`${PAST}/${pd}.json`, JSON.stringify({ date: pd, q: pq }));
+      console.log(`비교용 과거 가격 저장: ${pd} (목표 ${target})`);
+      return;
+    }
+  };
+  let snapDays = listDays();
   const nearest = (target: string) => {
     const t = new Date(target + 'T00:00:00Z').getTime();
     let best: string | null = null;
@@ -260,9 +292,18 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
     [4, shift(-1, 0)],
     [5, shift(0, -1)],
   ] as [number, string][]) {
+    const missing = Object.values(q['1101'] ?? {}).filter((v) => v[idx] == null).length;
+    if (missing > 5 && !nearest(target)) {
+      try {
+        await fetchPast(target);
+      } catch (e) {
+        console.log('과거 가격 받기 실패', target, e);
+      }
+      snapDays = listDays();
+    }
     const near = nearest(target);
     if (!near || near === day) continue;
-    const snapQ = (JSON.parse(readFileSync(`${SNAP}/${near}.json`, 'utf8')) as { q: Record<string, Record<string, number>> }).q;
+    const snapQ = (JSON.parse(readFileSync(`${dirOf(near)}/${near}.json`, 'utf8')) as { q: Record<string, Record<string, number>> }).q;
     for (const region of regionCodes)
       for (const [id, v] of Object.entries(q[region])) if (v[idx] == null && snapQ[region]?.[id]) v[idx] = snapQ[region][id];
   }
