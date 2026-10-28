@@ -11,7 +11,7 @@
 export type ShopRule = { cats: string[]; must: string; not?: string; prefer?: string; kr?: boolean; max?: number };
 
 const PROC = '즙|주스|쥬스|분말|가루|파우더|젤리|캔디|사탕|씨앗|모종|묘목|종자';
-const IMP_PORK = '수입|미국|스페인|칠레|캐나다|멕시코|네덜란드|독일|덴마크|오스트리아|벨기에|프랑스|포르투갈|브라질';
+const IMP_PORK = '수입|미국|호주|스페인|칠레|캐나다|멕시코|네덜란드|독일|덴마크|오스트리아|벨기에|프랑스|포르투갈|브라질';
 const IMP_BEEF = '수입|미국|호주|캐나다|뉴질랜드|멕시코|아르헨|우루과이';
 const KR_PREFER = '국내산|국산|한돈|한우';
 
@@ -22,9 +22,9 @@ export const SHOP_RULES: Record<string, ShopRule> = {
   'brown-rice': { cats: ['쌀류 > 현미'], must: '현미', not: '가루|녹차|현미차|떡|과자|누룽지|칩|플레이크|음료|라이스페이퍼' },
   barley: { cats: ['잡곡류 > 보리'], must: '보리', not: '보리차|엿기름|새싹|가루|볶은|음료|티백|맥아|보리굴비' },
   'mixed-grain': { cats: ['쌀/잡곡류 > 혼합곡/기타곡류'], must: '혼합|잡곡|곡', not: '가루|선식|미숫|음료|차|시리얼|과자' },
-  soybean: { cats: ['콩류 > 백태/흰콩/메주콩'], must: '콩|백태|메주', not: '콩나물|두부|두유|콩국|가루|강낭|완두|렌틸|이집트|병아리|땅콩|서리태|쥐눈이|약콩|된장|청국장' },
-  'red-bean': { cats: ['잡곡류 > 팥'], must: '팥', not: '빙수|앙금|양갱|팥죽|빵|떡|가루|팥차|음료|티백|시럽|통조림' },
-  'mung-bean': { cats: ['잡곡류 > 녹두'], must: '녹두', not: '빈대떡|녹두전|가루|숙주|죽|묵|음료' },
+  soybean: { cats: ['콩류 > 백태/흰콩/메주콩'], must: '백태|메주콩|흰콩|대두', prefer: '국산|국내산', not: '호랑이|매화콩|콩나물|두부|두유|콩국|가루|강낭|완두|렌틸|이집트|병아리|땅콩|서리태|쥐눈이|약콩|된장|청국장' },
+  'red-bean': { cats: ['잡곡류 > 팥'], must: '팥', prefer: '국산|국내산', not: '빙수|앙금|양갱|팥죽|빵|떡|가루|팥차|음료|티백|시럽|통조림' },
+  'mung-bean': { cats: ['잡곡류 > 녹두'], must: '녹두', prefer: '국산|국내산', not: '빈대떡|녹두전|가루|숙주|죽|묵|음료' },
   'sweet-potato': {
     cats: ['감자/고구마 > 꿀고구마', '감자/고구마 > 밤고구마', '감자/고구마 > 호박고구마', '감자/고구마 > 자색고구마/기타고구마'],
     must: '고구마',
@@ -45,7 +45,7 @@ export const SHOP_RULES: Record<string, ShopRule> = {
   'young-radish': { cats: ['뿌리채소 > 열무'], must: '열무', not: '김치|물김치|비빔|국수|' + PROC },
   'cabbage-head': { cats: ['쌈채소/샐러드채소 > 양배추'], must: '양배추', not: '환|피클|샐러드|김치|라페|칩|' + PROC },
   spinach: { cats: ['나물/잎줄기채소 > 시금치'], must: '시금치', not: '무침|나물|파스타|냉동|' + PROC },
-  lettuce: { cats: ['쌈채소/샐러드채소 > 상추'], must: '상추', not: '궁채|줄기상추|양상추|모듬|믹스|모음|세트|샐러드|화분|키트|' + PROC },
+  lettuce: { cats: ['쌈채소/샐러드채소 > 상추'], must: '상추', not: '궁채|줄기상추|양상추|로메인|유러피안|랜덤|모듬|믹스|모음|세트|샐러드|화분|키트|' + PROC },
   perilla: { cats: ['쌈채소/샐러드채소 > 깻잎'], must: '깻잎', not: '장아찌|절임|김치|무침|통조림|캔|간장|양념|조림|' + PROC },
   chives: { cats: ['나물/잎줄기채소 > 부추'], must: '부추', not: '김치|겉절이|부추전|만두|' + PROC },
   'water-parsley': { cats: ['나물/잎줄기채소 > 미나리'], must: '미나리', not: '무침|' + PROC, kr: true },
@@ -105,7 +105,7 @@ export const SHOP_RULES: Record<string, ShopRule> = {
   almond: {
     cats: ['견과류 > 일반아몬드'],
     must: '아몬드',
-    not: '브리즈|우유|음료|두유|초콜릿|초코|과자|버터|믹스|혼합|하루견과|허니|김자반|맛아몬드|' + PROC,
+    not: '브리즈|우유|음료|두유|초콜릿|초코|과자|버터|믹스|혼합|하루견과|허니|김자반|맛아몬드|슬라이스|분태|' + PROC,
   },
 
   // ── 과일 ──
@@ -135,13 +135,13 @@ export const SHOP_RULES: Record<string, ShopRule> = {
   milk: { cats: ['냉장우유 > 흰우유'], must: '우유', not: '바나나|딸기|초코|커피|멸균|두유|아몬드|오트|귀리|분유|' + PROC },
   'pork-belly': { cats: ['돼지고기 > 생고기'], must: '삼겹', not: IMP_PORK + '|양념|훈제|간장|고추장|오겹|우삼겹|소고기|' + PROC, prefer: KR_PREFER },
   'pork-neck': { cats: ['돼지고기 > 생고기'], must: '목살|목심', not: IMP_PORK + '|양념|훈제|간장|고추장|소고기|한우|' + PROC, prefer: KR_PREFER },
-  'pork-shoulder': { cats: ['돼지고기 > 생고기'], must: '앞다리|앞다릿살|전지', not: IMP_PORK + '|양념|훈제|족발|간장|고추장|' + PROC, prefer: KR_PREFER },
+  'pork-shoulder': { cats: ['돼지고기 > 생고기'], must: '앞다리|앞다릿살|전지', not: IMP_PORK + '|소\\s|소앞|우전각|한우|소고기|양념|훈제|족발|간장|고추장|' + PROC, prefer: KR_PREFER },
   'pork-rib': { cats: ['돼지고기 > 생고기'], must: '갈비', not: IMP_PORK + '|양념|훈제|등갈비|바베큐|BBQ|소갈비|LA|' + PROC, prefer: KR_PREFER },
-  'beef-sirloin': { cats: ['소고기 > 생고기'], must: '^(?=.*한우)(?=.*등심)', not: IMP_BEEF + '|양념|불고기|채끝|살치|' + PROC },
+  'beef-sirloin': { cats: ['소고기 > 생고기', '축산선물세트 > 한우등심/불고기세트'], must: '^(?=.*한우)(?=.*등심)', not: IMP_BEEF + '|양념|불고기|채끝|살치|' + PROC },
   'beef-tenderloin': { cats: ['소고기 > 생고기'], must: '^(?=.*한우)(?=.*안심(?!한우))', not: IMP_BEEF + '|꼬리|잡뼈|사골|뼈|양념|장조림|불고기|국거리|등심|' + PROC },
-  'beef-brisket': { cats: ['소고기 > 생고기'], must: '^(?=.*한우)(?=.*양지)', not: IMP_BEEF + '|양념|사골|뼈|장조림|' + PROC },
-  'beef-rib': { cats: ['소고기 > 생고기'], must: '^(?=.*한우)(?=.*갈비)', not: IMP_BEEF + '|갈비살|양념|LA|갈비탕|' + PROC },
-  'us-beef': { cats: ['소고기 > 생고기'], must: '^(?=.*갈비살)(?=.*(미국|호주|수입|캐나다|뉴질랜드))', not: '한우|국내산|양념|돼지|' + PROC },
+  'beef-brisket': { cats: ['소고기 > 생고기'], must: '^(?=.*한우)(?=.*양지)', not: IMP_BEEF + '|우삼겹|차돌|양념|사골|뼈|장조림|' + PROC },
+  'beef-rib': { cats: ['소고기 > 생고기', '축산선물세트 > 한우갈비세트'], must: '^(?=.*한우)(?=.*갈비)', not: IMP_BEEF + '|갈비살|양념|LA|갈비탕|' + PROC },
+  'us-beef': { cats: ['소고기 > 생고기', '축산선물세트 > 수입소고기세트'], must: '^(?=.*갈비살)(?=.*(미국|호주|수입|캐나다|뉴질랜드))', not: '한우|국내산|양념|돼지|' + PROC },
   'imported-pork': {
     cats: ['돼지고기 > 생고기'],
     must: '^(?=.*삼겹)(?=.*(' + IMP_PORK + '))',
@@ -150,11 +150,11 @@ export const SHOP_RULES: Record<string, ShopRule> = {
   chicken: {
     cats: ['닭/오리고기 > 생고기'],
     must: '닭',
-    not: '오리|가슴살|안심|닭발|껍질|똥집|모래집|근위|양념|훈제|튀김|소시지|스테이크|큐브|만두|닭강정|닭갈비|윙|닭봉|다리살|닭정육|순살|목살|' + PROC,
+    not: '오리|가슴살|안심|닭발|껍질|똥집|모래집|근위|양념|훈제|튀김|소시지|스테이크|큐브|만두|닭강정|닭갈비|윙|닭봉|다리살|닭다리|북채|날개|닭가슴|닭정육|순살|목살|' + PROC,
   },
 
   // ── 수산 ──
-  mackerel: { cats: ['생선 > 고등어'], must: '고등어', not: '필렛|필레|순살|자반|간고등어|구이|조림|통조림|캔|훈제|김치|스테이크|' + PROC },
+  mackerel: { cats: ['생선 > 고등어'], must: '고등어', not: '고등어살|가시|필렛|필레|순살|자반|간고등어|구이|조림|통조림|캔|훈제|김치|스테이크|' + PROC },
   hairtail: { cats: ['생선 > 갈치'], must: '갈치', not: '순살|조림|구이|갈치젓|속젓|통조림|' + PROC },
   'yellow-croaker': { cats: ['생선 > 조기'], must: '참조기', not: '굴비|부세|중국|수입|구이|조기젓|' + PROC },
   gulbi: { cats: ['생선 > 굴비'], must: '굴비', not: '부세|고추장|구이|찜|조림|중국|' + PROC },
@@ -164,7 +164,7 @@ export const SHOP_RULES: Record<string, ShopRule> = {
   squid: {
     cats: ['오징어/낙지/연체류 > 오징어'],
     must: '오징어',
-    not: '건오징어|마른|반건|조미|진미|오징어채|구이|튀김|순대|오징어젓|볶음|먹물|숏다리|쥐포|땅콩|칩|짬뽕|링|' + PROC,
+    not: '갑오징어|슬라이스|건오징어|마른|반건|조미|진미|오징어채|구이|튀김|순대|오징어젓|볶음|먹물|숏다리|쥐포|땅콩|칩|짬뽕|링|' + PROC,
   },
   octopus: { cats: ['오징어/낙지/연체류 > 낙지'], must: '낙지', not: '낙지젓|볶음|탕|호롱|양념|쭈꾸미|주꾸미|소스|만두|' + PROC },
   shrimp: {
@@ -183,7 +183,7 @@ export const SHOP_RULES: Record<string, ShopRule> = {
     not: '굴비|굴소스|굴젓|어리굴젓|굴전|굴국|굴튀김|굴짬뽕|오일|소스|과자|건조|' + PROC,
     kr: true,
   },
-  scallop: { cats: ['전복/굴/조개류 > 가리비'], must: '가리비', not: '관자|버터|구이|치즈|소스|통조림|건가리비|' + PROC },
+  scallop: { cats: ['전복/굴/조개류 > 가리비'], must: '가리비', not: '가리비살|자숙|관자|버터|구이|치즈|소스|통조림|건가리비|' + PROC },
   'imported-croaker': { cats: ['생선 > 조기'], must: '^(?=.*조기)(?=.*(수입|중국))', not: '굴비|구이|조기젓|' + PROC },
   'mackerel-fillet-kr': {
     cats: ['생선 > 고등어', '생선 > 자반고등어'],

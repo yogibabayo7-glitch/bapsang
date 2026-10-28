@@ -100,6 +100,24 @@ const CASES: [string, string, boolean][] = [
   ['mackerel-fillet-imp', '노르웨이 고등어 필렛, 1kg', true],
   ['mackerel', '노르웨이 고등어 필렛, 1kg', false],
   ['mackerel', '국내산 생물 고등어, 2마리', true],
+  // 10/28 첫 실행 결과에서 걸러야 했던 실제 상품
+  ['pork-shoulder', '고깃집왕건 호주산 소 앞다리살 우전각, 불고기용, 1kg', false],
+  ['pork-shoulder', '한돈 앞다리살 수육용, 1kg', true],
+  ['beef-brisket', '더예쁜한우 우삼겹 삼겹양지 구이용, 500g, 10개', false],
+  ['soybean', '힘찬농부오달봉 매화콩(호랑이콩) 수입산, 500g', false],
+  ['soybean', '이슬처럼 백태, 국산, 2025년산, 2kg, 1개', true],
+  ['chicken', '고기중독 닭다리 북채, 1kg, 1팩', false],
+  ['chicken', '동물복지 닭백숙용 통닭 11호, 1,000g, 1개', true],
+  ['mackerel', '국내산 손질 고등어살, 특대, 170g, 1개', false],
+  ['mackerel', '국내산 가시없는 고등어, 600g, 1개', false],
+  ['mackerel', '오아시스 손질 푸른바다 고등어, 360g, 1개', true],
+  ['squid', '국내산 손질 갑오징어, 400g, 2-3미, 1개', false],
+  ['squid', '한잔푸드 국내산 동해안 활 오징어, 1kg, 1개', true],
+  ['scallop', '물고기삼촌 자숙 가리비살, 1kg, 1개', false],
+  ['lettuce', '투뿔농부 로메인 상추, 4kg, 1박스', false],
+  ['lettuce', '무농약 적상추, 120g, 1개', true],
+  ['almond', '햇 아몬드슬라이스, 500g, 1개', false],
+  ['almond', '서래푸드 구운 아몬드, 1kg, 1봉', true],
 ];
 for (const [id, name, want] of CASES) {
   if (!SHOP_RULES[id]) continue;
