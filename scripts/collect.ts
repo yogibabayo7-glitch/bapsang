@@ -24,6 +24,9 @@ const num = (v?: string) => {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 };
 
+// 전국 = KAMIS가 직접 내는 '전체지역' 평균 (10/28: 예전엔 조사 도시 평균을 우리가 내서 KAMIS 평균과 3%쯤 달랐어요)
+export const NATIONAL = 'nat';
+
 // ── KAMIS 호출 ──
 export const kamisFetch: FetchRows = async (region, cat, day) => {
   const key = process.env.KAMIS_CERT_KEY;
@@ -32,7 +35,7 @@ export const kamisFetch: FetchRows = async (region, cat, day) => {
   const qs = new URLSearchParams({
     action: 'dailyPriceByCategoryList',
     p_product_cls_code: '01', // 01 = 소매
-    p_country_code: region,
+    ...(region === NATIONAL ? {} : { p_country_code: region }), // 지역코드를 빼면 KAMIS '전체지역'(전국 평균)
     p_regday: day,
     p_convert_kg_yn: 'N',
     p_item_category_code: cat,
@@ -202,7 +205,7 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
   }
   console.log('survey day', day);
 
-  const regionCodes = Object.keys(SURVEY_CITIES);
+  const regionCodes = [...Object.keys(SURVEY_CITIES), NATIONAL];
   const byRegion = new Map<string, Row[]>();
   for (const region of regionCodes) {
     const rows: Row[] = [];
@@ -214,7 +217,8 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
     console.log(region, rows.length);
   }
 
-  const chosen = chooseItems(byRegion);
+  // 품종·등급 고르기는 도시별 조사 기준으로 (전국 평균 줄은 고를 때 빼요)
+  const chosen = chooseItems(new Map([...byRegion].filter(([rg]) => rg !== NATIONAL)));
   const KEYS: (keyof Fields)[] = ['now', 'd1', 'w1', 'w2', 'm1', 'y1'];
   const q: Record<string, Record<string, (number | null)[]>> = {};
 
@@ -348,11 +352,23 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
   }
   console.log(`30일 평균: 서울 ${avgCount}개 품목 계산 (기록 ${recent.length}일 + KAMIS 1주·2주·1개월 전)`);
 
-  // 전국·경기 등 묶음 지역 = 속한 조사 도시들의 평균
+  // 경기·강원 등 묶음 지역 = 속한 조사 도시들의 평균
+  // 전국 = KAMIS '전체지역' 값. 그 품목이 KAMIS 전국 값에 없을 때만 조사 도시 평균으로 대신해요
+  let natUsed = 0;
+  let natFallback = 0;
   for (const r of REGIONS) {
     if (!r.members) continue;
     q[r.id] = {};
     for (const c of chosen) {
+      if (r.id === 'all') {
+        const nv = q[NATIONAL]?.[c.entry.id];
+        if (nv?.[0] != null) {
+          q.all[c.entry.id] = nv.map((x) => (x == null ? null : Math.round(x)));
+          natUsed++;
+          continue;
+        }
+        natFallback++;
+      }
       const vals = r.members.map((rg) => q[rg]?.[c.entry.id]).filter(Boolean) as (number | null)[][];
       if (!vals.length) continue;
       q[r.id][c.entry.id] = [...KEYS, 'avg30'].map((_, i) => {
@@ -361,6 +377,10 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
       });
     }
   }
+
+  console.log(`전국: KAMIS 전체지역 값 ${natUsed}개, 조사 도시 평균으로 대신 ${natFallback}개`);
+  const cab = q.all.cabbage?.[0];
+  if (cab) console.log(`확인용 전국 배추: ${cab}원`);
 
   const items = chosen
     .filter((c) => q.all[c.entry.id])
