@@ -17,18 +17,21 @@ export function matchesItem(id: string, p: ShopItem): boolean {
 }
 
 // 품목 상세의 상품: 그 품목 상품만 (상추면 상추, 콩이면 콩). 맞는 상품이 없으면 빈 목록 → 칸을 숨겨요.
-// 10/28 전에는 못 찾으면 같은 분류(채소·과일…)의 아무 상품이나 보여줘서 엉뚱한 상품이 나왔어요.
+// - shop.items가 있으면(10/28~) 사장님 PC가 그날 최신 규칙(docs/data/shop-rules.json)으로 고른 목록을 그대로 써요.
+//   앱 안 규칙으로 다시 거르지 않아요 → 규칙을 넓혀도 앱을 다시 올릴 필요 없음.
+// - 예전 shop.json(items 없음)이면 앱 안 규칙(카테고리 일치 + 이름 규칙)으로 묶음에서 골라요.
 export function productsFor(shop: Shop | null, id: string, limit = 12): ShopItem[] {
   if (!shop) return [];
   const all = Object.values(shop.groups).flat();
-  const byId = new Map(all.map((p) => [p.id, p]));
-  // items: 수집기가 종류가 고루 섞이게 고른 순서 그대로 먼저, 그다음 묶음에서 규칙에 맞는 상품
-  const picked = (shop.items?.[id] ?? [])
-    .map((x) => (typeof x === 'string' ? byId.get(x) : x))
-    .filter((p): p is ShopItem => !!p);
   const seen = new Set<string>();
-  const pool = [...picked, ...all];
-  return pool.filter((p) => matchesItem(id, p) && !seen.has(p.id) && seen.add(p.id)).slice(0, limit);
+  if (shop.items) {
+    const byId = new Map(all.map((p) => [p.id, p]));
+    return (shop.items[id] ?? [])
+      .map((x) => (typeof x === 'string' ? byId.get(x) : x))
+      .filter((p): p is ShopItem => !!p && !seen.has(p.id) && !!seen.add(p.id))
+      .slice(0, limit);
+  }
+  return all.filter((p) => matchesItem(id, p) && !seen.has(p.id) && seen.add(p.id)).slice(0, limit);
 }
 
 // 김장 재료: 수입·중국산은 빼고, '국산/국내산'이나 산지가 적힌 상품을 앞으로
