@@ -93,6 +93,26 @@ $ImportRe = '수입|중국|외국산|미국산|호주산|베트남|칠레산|러
 $KrRe     = '국산|국내산|국내|해남|괴산|강원|고랭지|평창|태백|정선|영월|홍천|강릉|횡성|진도|신안|영암|무안|부안|고창|청송|충북|전남|전북'
 $Links    = @{}
 
+# 김장 묶음은 재료별 정확한 카테고리에서 골고루 (10/28: 예전엔 절임배추가 12개 중 10개를 차지했어요)
+#  재료 순서대로 1위 상품을 하나씩 → 다 돌면 2위를 하나씩… 그래서 앞 10개에 재료가 한 개씩 나와요
+#  국산 표시는 앱과 같은 기준(국산·국내·해남·괴산·강원·고랭지·평창·태백·진도·신안·영암)인 상품만 써요
+$KimjangCats = @(
+  '채소류 > 나물/잎줄기채소 > 절임배추',
+  '조미료/향신료 > 고추가루',
+  '채소류 > 뿌리채소 > 깐마늘',
+  '젓갈 > 새우젓',
+  '육수/액젓 > 멸치액젓',
+  '채소류 > 뿌리채소 > 무',
+  '채소류 > 뿌리채소 > 생강',
+  '채소류 > 나물/잎줄기채소 > 쪽파',
+  '소금 > 천일염',
+  '쌀/찹쌀가루/전분 > 찹쌀가루',
+  '채소류 > 나물/잎줄기채소 > 미나리',
+  '채소류 > 나물/잎줄기채소 > 대파'
+)
+$KimjangPer = 2
+$AppKrRe = '국산|국내|해남|괴산|강원|고랭지|평창|태백|진도|신안|영암'
+
 $Block = @(); if ($cfg.block) { $Block = @($cfg.block | ForEach-Object { [string]$_ }) }
 
 $cats = (Api 'GET' '/categories' $null).categories
@@ -117,7 +137,13 @@ foreach ($g in $Groups.Keys) {
   $max = if ($MaxItems[$g]) { $MaxItems[$g] } else { 12 }
   $size = if ($NameMust[$g]) { 50 } else { 20 }
   $picked = New-Object System.Collections.ArrayList
-  foreach ($kw in $Groups[$g]) {
+  if ($g -eq 'kimjang') {
+    foreach ($leaf in $KimjangCats) {
+      $hit = $food | Where-Object { $_.path -like "*> $leaf" } | Select-Object -First 1
+      if ($hit) { [void]$picked.Add($hit) } else { Log "김장 카테고리 못 찾음: $leaf" }
+    }
+  }
+  foreach ($kw in $(if ($g -eq 'kimjang') { @() } else { $Groups[$g] })) {
     $hits = @($food | Where-Object { $_.name -like "*$kw*" } | Sort-Object level | Select-Object -First 2)
     foreach ($hit in $hits) { if (-not ($picked | Where-Object { $_.id -eq $hit.id })) { [void]$picked.Add($hit) } }
     if ($picked.Count -ge 5) { break }
@@ -142,7 +168,26 @@ foreach ($g in $Groups.Keys) {
     }
   }
   # 카테고리마다 골고루: 순위순으로 섞어서 12개 (김장 묶음은 국산 표시 상품 먼저)
+  if ($g -eq 'kimjang') {
+    # 재료(카테고리)마다 국산 표시 상품 우선·순위순으로 최대 2개 → 라운드로빈으로 섞기
+    $byCat = [ordered]@{}
+    foreach ($c in $picked) {
+      $mine = @($items | Where-Object { $_.cat -eq $c.name })
+      $krs  = @($mine | Where-Object { $_.it.displayName -match $AppKrRe } | Sort-Object rank)
+      $rest = @($mine | Where-Object { $_.it.displayName -notmatch $AppKrRe } | Sort-Object rank)
+      $byCat[$c.name] = @(@($krs) + @($rest) | Select-Object -First $KimjangPer)
+      # 다른 재료 칸에서 쓰지 않은 상품은 seen에서 풀어 줘요 (뒤 묶음에서 쓸 수 있게)
+      foreach ($x in $mine) { if (-not ($byCat[$c.name] | Where-Object { $_.it.tacaItemId -eq $x.it.tacaItemId })) { $seen.Remove([string]$x.it.tacaItemId) } }
+    }
+    $rr = New-Object System.Collections.ArrayList
+    for ($i = 0; $i -lt $KimjangPer; $i++) {
+      foreach ($k in $byCat.Keys) { if ($byCat[$k].Count -gt $i) { [void]$rr.Add($byCat[$k][$i]) } }
+    }
+    $max = [Math]::Max($max, $KimjangCats.Count + 4)
+    $top = @($rr | Select-Object -First $max)
+  } else {
   $top = @($items | Sort-Object kr, rank | Select-Object -First $max)
+  }
   $list = New-Object System.Collections.ArrayList
   foreach ($x in $top) {
     $key = [string]$x.it.tacaItemId
