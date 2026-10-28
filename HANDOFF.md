@@ -13,6 +13,12 @@
     - 코드: `src/platform.ts`(preloadAds·maybeShowInterstitial·showRewarded), `src/App.tsx`(RegionCompare).
 - **밥값 챌린지** `babgap-challenge` — 소스는 이 저장소에 없음(작업 컨테이너의 /home/claude/babgap-challenge, 재구성본). v1.3(토스 적금 보러 가기 버튼, 링크 https://toss.im/_m/7VUPezk2) 검토 중.
 
+## 10/28 밤 (23:50) — v0.5에 김장 계산기 업그레이드 합침
+- `src/Kimjang.tsx`: 배추 포기 수 직접 입력(±5, 1~200) + 10/20/30/40 버튼, 낱개 재료(포기·개) 올림 계산, 배추 1포기당 비용.
+- 재료별 보기: 체크 풀면 '집에 있는 재료'로 합계·비교·공유에서 빠짐(`jb.kimjang.skip`), 뺀 재료 상품은 김장 카드에서 숨김. 줄마다 ▲▼: 배추는 포기 수 ±1, 나머지는 그 재료 양만(개 1·kg 0.1·g 10), 배율 저장(`jb.kimjang.adj`), '조정함' 표시, '재료 양 기본으로 되돌리기'.
+- 이벤트: kimjang_heads_changed, kimjang_item_toggled, kimjang_amount_changed, kimjang_amount_reset.
+- 확인: tsc·shop-rules(시험 115개)·빌드 통과, 10/28 시세 20포기 305,980원. ⚠ 23:40에 사장님께 드린 bapsang-price-v0.5.ait는 옛 코드(zip) 기준이라 쓰면 안 됨 → 10/29 아침 점검이 main으로 다시 빌드한 v0.5.0을 올릴 것.
+
 ## 10/28 밤 (21:30) — 1쪽만 보던 원인 = 하루 조회 한도 + 고정 상품 + PC 검색
 - 원인(문서 확인): 쉐어링크 Open API는 상품 목록·상세로 '받아 간 상품 수'가 하루 1만 개(거래처당, 밤 12시 초기화, 넘으면 HTTP 200 + `SHARELINK_OPENAPI_QUOTA_EXCEEDED`). 품목 108개 × 카테고리 1쪽(100개)만으로도 거의 1만 개 → 그날 여러 번 돌리면 다음 쪽 조회가 전부 실패 → 사실상 1쪽. 쪽 넘김 필드(nextCursor·hasNext)는 문서와 코드가 같았음. 20:58 실행 결과도 상품 없는 11개 그대로였음.
 - ✅ 10/28 21:35 사장님 PC shop 폴더에 새 파일 9개 전부 덮어씀(bapsang-shop.ps1 4번째 줄 shop-lib 문구 확인). 처음엔 bapsang-shop.ps1만 옛 파일이 남아 있었음 → bapsang-shop-tools-1028.zip으로 다시 전달. 다음: 10/29 09:40 자동 실행 후 shop-log.txt 확인 → v0.5.0 올리기.

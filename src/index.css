@@ -638,6 +638,27 @@ h2 {
 .kjList .pr small { display: block; font-size: 12px; color: var(--g500); }
 .kjList .pr small.up { color: var(--red); }
 .kjList .pr small.down { color: var(--blue); }
+.kjHeadRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 6px 0 10px; }
+.kjHeadRow > span { font-weight: 600; color: var(--g700); }
+.kjInput { width: 64px; height: 34px; border: 1px solid var(--g300); border-radius: 10px; text-align: center; font: inherit; font-size: 18px; font-weight: 700; color: var(--g900); background: var(--white); -moz-appearance: textfield; }
+.kjInput::-webkit-outer-spin-button, .kjInput::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.kjChips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.kjChips span, .kjChips button { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: var(--g100); color: var(--g700); }
+.kjChips button { background: var(--blue-weak); color: var(--blue); font-weight: 600; }
+.kjRow { gap: 10px; }
+.kjBox { flex: none; width: 22px; height: 22px; border-radius: 7px; background: var(--blue); position: relative; }
+.kjBox::after { content: ''; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+.kjRow.off .kjBox { background: var(--white); border: 2px solid var(--g300); }
+.kjRow.off .kjBox::after { display: none; }
+.kjRow.off .nm b, .kjRow.off .pr b { color: var(--g500); text-decoration: line-through; }
+.kjRow .nm { flex: 1; min-width: 0; }
+.kjAmt { display: flex; flex-direction: column; gap: 4px; flex: none; }
+.kjAmt button { width: 34px; height: 24px; border-radius: 8px; background: var(--g100); color: var(--g700); font-size: 11px; line-height: 1; }
+.kjAmt button:active { background: var(--g300); }
+.kjAmt button:disabled { opacity: 0.35; }
+.kjRow .pr { min-width: 92px; text-align: right; }
+.kjReset { display: block; margin: 10px 0 0 auto; font-size: 13px; }
+.kjRow:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; border-radius: 8px; }
 
 /* 토스쇼핑 상품 카드 */
 .shop { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--g100); }
