@@ -5,3 +5,10 @@ tsconfig.tsbuildinfo
 
 tools/shop/shop-config.json
 tools/shop/shop-log.txt
+tools/shop/pins.json
+tools/shop/quota.txt
+tools/shop/best-cache.txt
+tools/shop/found.txt
+tools/shop/link-cache.json
+tools/shop/search-result.html
+tools/shop/shop-rules.json

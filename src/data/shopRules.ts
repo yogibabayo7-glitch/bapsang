@@ -5,11 +5,13 @@
 // - prefer : 이름에 있으면 앞으로 (예: 국산 고기는 '한돈·국내산')
 // - kr   : 수입·중국산 표시 상품은 뺌
 // - max  : 품목당 최대 상품 수 (기본 12, 종류가 고루 섞이게 골라요)
+// - pin  : 고정 상품 번호(tacaItemId) — 이름 규칙과 상관없이 맨 앞에 나와요 (품절·판매 끝인 날만 빠짐)
+//          사장님 PC의 3_search.bat로 고정한 건 PC의 pins.json에 따로 저장돼요(이 표와 합쳐서 씀)
 // 이 표는 `npm run shop-rules`로 docs/data/shop-rules.json이 되고, 사장님 PC의 bapsang-shop.ps1이
 // 매일 그 파일을 내려받아 써요 → 규칙을 고쳐서 올리기만 하면 다음 날 아침부터 바로 반영돼요.
 // 정규식은 JavaScript와 PowerShell(.NET) 둘 다에서 똑같이 동작하는 문법만 써요. (PowerShell은 대소문자 구분 안 함)
 
-export type ShopRule = { cats: string[]; must: string; not?: string; prefer?: string; kr?: boolean; max?: number };
+export type ShopRule = { cats: string[]; must: string; not?: string; prefer?: string; kr?: boolean; max?: number; pin?: string[] };
 
 const PROC = '다진|큐브|토핑|즙|주스|쥬스|분말|가루|파우더|젤리|캔디|사탕|씨앗|모종|묘목|종자';
 const IMP_PORK = '이베리코|수입|미국|호주|스페인|칠레|캐나다|멕시코|네덜란드|독일|덴마크|오스트리아|벨기에|프랑스|포르투갈|브라질';
@@ -159,9 +161,10 @@ export const SHOP_RULES: Record<string, ShopRule> = {
   hairtail: { cats: ['생선 > 갈치'], must: '갈치', not: '마른|풀치|순살|조림|구이|갈치젓|속젓|통조림|' + PROC },
   'yellow-croaker': { cats: ['생선 > 조기'], must: '참조기', not: '굴비|부세|중국|수입|구이|조기젓|' + PROC },
   gulbi: { cats: ['생선 > 굴비'], must: '굴비', not: '민어|부세|고추장|구이|찜|조림|중국|' + PROC },
-  pollack: { cats: ['생선 > 명태'], must: '명태|동태|생태', not: '코다리|황태|북어|노가리|명태채|명란|창난|곤이|동태전|전감|탕|찌개|볶음|' + PROC },
+  // 10/28 밤: '찌개용·탕용 동태'는 생선 그대로라 넣어요 (찌개·탕 완제품만 빼요)
+  pollack: { cats: ['생선 > 명태'], must: '명태|동태|생태', not: '코다리|황태|북어|노가리|명태채|명란|창난|곤이|동태전|전감|탕(?!용)|찌개(?!용)|볶음|' + PROC },
   'spanish-mackerel': { cats: ['생선 > 삼치'], must: '삼치', not: '구이|조림|순살|스테이크|가스|까스|' + PROC },
-  saury: { cats: ['생선 > 꽁치'], must: '꽁치', not: '통조림|캔|과메기|구이|조림|김치|' + PROC },
+  saury: { cats: ['생선 > 꽁치'], must: '꽁치', not: '통조림|캔|과메기|구이(?!용)|조림(?!용)|김치|' + PROC },
   squid: {
     cats: ['오징어/낙지/연체류 > 오징어'],
     must: '오징어',
@@ -185,7 +188,7 @@ export const SHOP_RULES: Record<string, ShopRule> = {
     kr: true,
   },
   scallop: { cats: ['전복/굴/조개류 > 가리비'], must: '가리비', not: '가리비살|자숙|관자|버터|구이|치즈|소스|통조림|건가리비|' + PROC },
-  'imported-croaker': { cats: ['생선 > 조기'], must: '^(?=.*조기)(?=.*(수입|중국))', not: '굴비|구이|조기젓|' + PROC },
+  'imported-croaker': { cats: ['생선 > 조기'], must: '^(?=.*조기)(?=.*(수입|중국))', not: '굴비|구이(?!용)|조기젓|' + PROC },
   'mackerel-fillet-kr': {
     cats: ['생선 > 고등어', '생선 > 자반고등어'],
     must: '^(?=.*고등어)(?=.*(필렛|필레|순살))',

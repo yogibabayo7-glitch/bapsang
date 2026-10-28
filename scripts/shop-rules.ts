@@ -14,6 +14,9 @@ const fail = (m: string) => {
 for (const c of CATALOG) if (!SHOP_RULES[c.id]) fail(`규칙 없음: ${c.id} ${c.name}`);
 for (const id of Object.keys(SHOP_RULES)) if (!CATALOG.find((c) => c.id === id)) fail(`카탈로그에 없는 규칙: ${id}`);
 
+for (const [id, r] of Object.entries(SHOP_RULES))
+  for (const p of r.pin ?? []) if (!/^\d+$/.test(p)) fail(`고정 상품 번호는 숫자만: ${id} ${p}`);
+
 const ok = (id: string, name: string) => {
   const r = SHOP_RULES[id];
   return (
@@ -134,6 +137,14 @@ const CASES: [string, string, boolean][] = [
   ['lettuce', '무농약 적상추, 120g, 1개', true],
   ['almond', '햇 아몬드슬라이스, 500g, 1개', false],
   ['almond', '서래푸드 구운 아몬드, 1kg, 1봉', true],
+  // 10/28 밤: 상품 없던 생선 — 찌개용·구이용 손질 생선은 넣고 완제품은 빼요
+  ['pollack', '국내산 손질 동태 찌개용, 1kg', true],
+  ['pollack', '얼큰 동태탕 밀키트, 800g', false],
+  ['pollack', '덕장 황태채, 200g', false],
+  ['saury', '국내산 꽁치 구이용, 1kg', true],
+  ['saury', '동원 꽁치 통조림, 400g', false],
+  ['imported-croaker', '중국산 조기 구이용, 1kg', true],
+  ['imported-croaker', '영광 법성포 굴비 10미', false],
 ];
 for (const [id, name, want] of CASES) {
   if (!SHOP_RULES[id]) continue;
