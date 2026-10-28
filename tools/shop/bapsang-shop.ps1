@@ -244,6 +244,31 @@ try {
   if (Test-Path $RulesFile) { try { $rules = [IO.File]::ReadAllText($RulesFile, [Text.Encoding]::UTF8) | ConvertFrom-Json } catch {} }
 }
 
+# 카테고리 인기 상품을 쪽(100개씩)으로 받아 둬요. 같은 카테고리는 한 번만 받고, 더 필요하면 다음 쪽부터 이어 받아요.
+$BestState = @{}
+function Get-Best($catId, $pages) {
+  $k = [string]$catId
+  if (-not $BestState.ContainsKey($k)) { $BestState[$k] = @{ items = (New-Object System.Collections.ArrayList); cursor = $null; more = $true; n = 0 } }
+  $st = $BestState[$k]
+  while ($st.more -and $st.n -lt $pages) {
+    $q = "/products/best-categories/$($catId)?size=100"
+    if ($st.cursor) { $q += "&cursor=$([uri]::EscapeDataString([string]$st.cursor))" }
+    try { $res = Api 'GET' $q $null }
+    catch {
+      if ($st.n -eq 0) {
+        try { $res = Api 'GET' "/products/best-categories/$($catId)?size=50" $null } catch { Log "카테고리 $catId 조회 실패: $_"; $st.more = $false; break }
+        foreach ($it in @($res.items)) { if ($it) { [void]$st.items.Add($it) } }
+        $st.n++; $st.more = $false; break
+      } else { Log "카테고리 $catId 다음 쪽 조회 실패: $_"; $st.more = $false; break }
+    }
+    foreach ($it in @($res.items)) { if ($it) { [void]$st.items.Add($it) } }
+    $st.n++
+    $st.cursor = $res.nextCursor
+    $st.more = [bool]$res.hasNext -and [bool]$res.nextCursor
+  }
+  return @($st.items)
+}
+
 $itemsOut = [ordered]@{}
 $BestCache = @{}
 if ($rules -and $rules.items) {
@@ -261,8 +286,12 @@ if ($rules -and $rules.items) {
     $max = if ($r.max) { [int]$r.max } else { 12 }
     $byCat = [ordered]@{}
     $ids = @{}
-    # 1단계: 정해 둔 카테고리 / 2단계: 상품이 모자라면 한 단계 위 카테고리까지 (예: 피망 → 열매채소 전체)
-    #  토스쇼핑에선 같은 상품이 옆 카테고리(파프리카·고추 등)에 올라가 있는 경우가 많아요. 이름 규칙은 똑같이 적용.
+    # 상품 찾기 (10/28 밤: '이름에 그 단어가 있으면 무조건' — 인기 100개 밖 상품도 끝까지 찾아요)
+    #  1단계: 정해 둔 카테고리 인기 100개
+    #  2단계: 모자라면 같은 카테고리를 끝까지 (다음 쪽, 최대 1,000개)
+    #  3단계: 그래도 모자라면 한 단계 위 카테고리 끝까지 (예: 피망 → 열매채소 전체)
+    #  4단계: 하나도 없으면 두 단계 위까지 (예: 열무 → 채소류 전체, 한우 → 축산물 전체)
+    #  토스쇼핑에선 '산지직송 국내산 햇 열무'처럼 이름이 길거나 옆 카테고리에 올라간 상품이 많아요. 이름 규칙은 똑같이 적용.
     $prim = New-Object System.Collections.ArrayList
     foreach ($suf in @($r.cats)) {
       $c = $food | Where-Object { $_.path -like "* > $suf" } | Select-Object -First 1
@@ -270,29 +299,27 @@ if ($rules -and $rules.items) {
       [void]$prim.Add($c)
     }
     $got = 0
-    for ($stage = 1; $stage -le 2; $stage++) {
+    $level = @($prim)
+    for ($stage = 1; $stage -le 4; $stage++) {
+      $pages = 1
       if ($stage -eq 1) { $todo = @($prim) }
+      elseif ($stage -eq 2) { if ($got -ge $max) { break }; $todo = @($prim); $pages = 10 }
       else {
-        if ($got -ge $max) { break }
+        if ($stage -eq 3 -and $got -ge $max) { break }
+        if ($stage -eq 4 -and $got -gt 0) { break }
+        $pages = if ($stage -eq 3) { 10 } else { 20 }
         $todo = New-Object System.Collections.ArrayList
-        foreach ($c in $prim) {
+        foreach ($c in $level) {
           $pp = $c.path.Substring(0, $c.path.LastIndexOf(' > '))
           if ($pp -notmatch ' > .+ > ') { continue }   # '식품 > 신선식품' 같은 너무 넓은 곳은 안 봐요
           $pc = $food | Where-Object { $_.path -eq $pp } | Select-Object -First 1
-          if ($pc -and -not $byCat.Contains($pc.name) -and -not ($todo | Where-Object { $_.id -eq $pc.id })) { [void]$todo.Add($pc) }
+          if ($pc -and -not ($todo | Where-Object { $_.id -eq $pc.id })) { [void]$todo.Add($pc) }
         }
+        $level = @($todo)
       }
       foreach ($c in $todo) {
-        if (-not $BestCache.ContainsKey($c.id)) {
-          # 인기 상품을 넉넉히 100개 (안 되면 50개)
-          try { $BestCache[$c.id] = @((Api 'GET' "/products/best-categories/$($c.id)?size=100" $null).items) }
-          catch {
-            try { $BestCache[$c.id] = @((Api 'GET' "/products/best-categories/$($c.id)?size=50" $null).items) }
-            catch { Log "카테고리 $($c.path) 조회 실패: $_"; $BestCache[$c.id] = @() }
-          }
-        }
         $mine = New-Object System.Collections.ArrayList
-        foreach ($it in $BestCache[$c.id]) {
+        foreach ($it in (Get-Best $c.id $pages)) {
           $id = [string]$it.tacaItemId
           $nm = [string]$it.displayName
           if ($ids.ContainsKey($id)) { continue }
@@ -302,9 +329,11 @@ if ($rules -and $rules.items) {
           if ($r.kr -and $nm -match $ruleImport) { continue }
           $ids[$id] = $true
           $pref = if ($r.prefer -and $nm -match [string]$r.prefer) { 0 } elseif ($r.kr -and $nm -match $AppKrRe) { 0 } else { 1 }
-          [void]$mine.Add([pscustomobject]@{ it = $it; cat = $c.name; rank = [int]$it.rank; pref = $pref; base = (Base-Name $nm) })
+          [void]$mine.Add([pscustomobject]@{ it = $it; cat = $c.name; rank = [int]$it.rank + ($stage - 1) * 10000; pref = $pref; base = (Base-Name $nm) })
         }
-        $byCat[$c.name] = @($mine | Sort-Object pref, rank)
+        $key = [string]$c.id
+        if ($byCat.Contains($key)) { $byCat[$key] = @(@($byCat[$key]) + @($mine) | Sort-Object pref, rank) }
+        else { $byCat[$key] = @($mine | Sort-Object pref, rank) }
         $got += $mine.Count
       }
     }
@@ -346,7 +375,7 @@ if ($rules -and $rules.items) {
   }
   $withProd = @($itemsOut.Keys | Where-Object { $itemsOut[$_].Count -gt 0 }).Count
   $sumProd = ($itemsOut.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
-  Log "품목별 상품: $($rules.items.Count)개 품목 중 $withProd 개에 상품 있음, 모두 $sumProd 개 (카테고리 $($BestCache.Count)개 조회)"
+  Log "품목별 상품: $($rules.items.Count)개 품목 중 $withProd 개에 상품 있음, 모두 $sumProd 개 (카테고리 $($BestState.Count)개, $((($BestState.Values | ForEach-Object { $_.n }) | Measure-Object -Sum).Sum)쪽 조회)"
   if ($noProduct.Count) { Log "상품 없는 품목(앱에서 칸 숨김): $($noProduct -join ', ')" }
 
   # 상품 내용은 'byItem' 묶음에 한 번씩 넣어요. veg·fruit·meat·fish·grain·spice 묶음은 비워 둬요 (10/28 20시)
@@ -400,6 +429,54 @@ if ($rules -and $rules.items) {
   Log '품목 규칙이 없어서 품목별 상품은 이번엔 건너뛰어요.'
 }
 
+# ── 반찬 모아 보기 (10/28 밤, 사장님 요청: 반찬 테마) ──
+# 반찬 카테고리마다 인기 상품을 골라 shop.json의 'banchan'에 넣어요 (groups 밖이라 예전 앱 품목 상품엔 안 섞여요).
+#  [보여줄 이름, 토스쇼핑 카테고리 끝부분]
+$BanchanCats = @(
+  @('볶음', '반찬 > 볶음반찬'),
+  @('조림', '반찬 > 조림반찬'),
+  @('무침·나물', '반찬 > 무침반찬'),
+  @('장아찌·절임', '반찬 > 단무지/피클/절임반찬'),
+  @('반찬세트', '반찬 > 혼합반찬/반찬세트'),
+  @('김치', '김치/반찬/젓갈 > 김치'),
+  @('젓갈', '김치/반찬/젓갈 > 젓갈'),
+  @('게장·장', '김치/반찬/젓갈 > 찌개양념/반찬장류')
+)
+$BanchanPer = 15
+$BanchanNot = '찌개\s*양념|김치\s*양념|김장\s*양념|양념\s*세트|양념소|김치\s*소|육수|다시팩|밀키트'
+$banchan = [ordered]@{ kinds = @(); items = @() }
+try {
+  $bItems = New-Object System.Collections.ArrayList
+  $bKinds = New-Object System.Collections.ArrayList
+  $bSeen = @{}
+  foreach ($bc in $BanchanCats) {
+    $label = $bc[0]; $suf = $bc[1]
+    $c = $food | Where-Object { $_.path -like "* > $suf" } | Select-Object -First 1
+    if (-not $c) { Log "반찬 카테고리 못 찾음: $suf"; continue }
+    $pick = New-Object System.Collections.ArrayList
+    $bases = @{}
+    foreach ($pages in 1, 3) {
+      foreach ($it in (Get-Best $c.id $pages)) {
+        if ($pick.Count -ge $BanchanPer) { break }
+        $id = [string]$it.tacaItemId; $nm = [string]$it.displayName
+        if ($bSeen.ContainsKey($id) -or $it.isSoldOut -or $Block -contains $id -or -not $it.thumbnailUrl) { continue }
+        if ($nm -match $BanchanNot) { continue }
+        $bn = if (Get-Command Base-Name -ErrorAction SilentlyContinue) { Base-Name $nm } else { $nm }
+        if ($bases.ContainsKey($bn)) { continue }
+        $url = Get-Link $it
+        if (-not $url) { continue }
+        $bases[$bn] = $true; $bSeen[$id] = $true
+        [void]$pick.Add([ordered]@{ id = $id; name = $it.displayName; thumb = $it.thumbnailUrl; url = $url; cat = $label })
+      }
+      if ($pick.Count -ge $BanchanPer) { break }
+    }
+    if ($pick.Count) { [void]$bKinds.Add($label); foreach ($x in $pick) { [void]$bItems.Add($x) } }
+    Log "반찬 $label : 상품 $($pick.Count)개"
+  }
+  $banchan = [ordered]@{ kinds = @($bKinds); items = @($bItems) }
+  Log "반찬 모아 보기: $($bKinds.Count)종류, 상품 $($bItems.Count)개"
+} catch { Log "반찬 모아 보기 실패(다른 상품은 그대로 올려요): $_" }
+
 # 지면 링크 (오아시스 신선식품, 특가)
 $pages = [ordered]@{}
 try { $pages.fresh = (Api 'POST' '/links' @{ landingType = 'FRESH_FOOD'; publisherId = $cfg.publisherId }).shortUrl } catch { Log "신선식품 지면 링크 실패: $_" }
@@ -414,8 +491,9 @@ $shop = [ordered]@{
   pages      = $pages
   groups     = $out
   items      = $itemsOut
+  banchan    = $banchan
   # 앱은 안 쓰지만 규칙 만들 때 참고용 (장보기 관련 카테고리만 — 파일 크기 줄이기)
-  categories = @($food | Where-Object { $_.path -match '신선식품|조미료|젓갈|액젓|소금|우유' } | ForEach-Object { [ordered]@{ id = $_.id; path = $_.path } })
+  categories = @($food | Where-Object { $_.path -match '신선식품|조미료|젓갈|액젓|소금|우유|반찬' } | ForEach-Object { [ordered]@{ id = $_.id; path = $_.path } })
 }
 
 # 링크 저장 (다음 실행 때 다시 씀)

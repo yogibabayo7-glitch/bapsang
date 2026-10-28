@@ -3,6 +3,7 @@ import { CATEGORY_LABEL, regionNote, type CategoryId, type Region } from './data
 import { loadHistory, loadPriceBook, loadShop } from './data/source';
 import { CHEAP_RATIO, Q, type History, type Item, type PriceBook, type Shop } from './data/types';
 import { KimjangCard, isKimjangSeason } from './Kimjang';
+import { BanchanCard } from './Banchan';
 import { ShopStrip, productsFor } from './Shop';
 import { ICONS, ICON_OF } from './icons';
 import { BANNER_AD_ID, REWARD_AD_ID, attachBanner, getItem, maybeShowInterstitial, preloadAds, setItem, shareText, showRewarded, track } from './platform';
@@ -325,6 +326,8 @@ export default function App() {
             )}
           </section>
         )}
+
+        <BanchanCard shop={shop} />
 
         <section className="card basket">
           <div className="listHead">

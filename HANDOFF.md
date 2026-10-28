@@ -13,6 +13,14 @@
     - 코드: `src/platform.ts`(preloadAds·maybeShowInterstitial·showRewarded), `src/App.tsx`(RegionCompare).
 - **밥값 챌린지** `babgap-challenge` — 소스는 이 저장소에 없음(작업 컨테이너의 /home/claude/babgap-challenge, 재구성본). v1.3(토스 적금 보러 가기 버튼, 링크 https://toss.im/_m/7VUPezk2) 검토 중.
 
+## 10/28 밤 (20:50) — 끝까지 찾기 + 반찬 테마 + 아침 자동 점검
+- 원인: 토스 API는 카테고리 인기 상품을 100개씩 쪽으로 줌(cursor·hasNext). 예전엔 첫 100개만 봐서 '산지직송 국내산 햇 열무', 청피망, 이름 긴 체리·한우를 못 찾음. 키워드 검색 API는 없음(문서 확인).
+- ps1 `Get-Best`: 쪽 넘겨 받기(캐시). 품목 상품 찾기 4단계 — ①인기 100 ②같은 카테고리 끝까지(최대 10쪽) ③한 단계 위 끝까지(10쪽) ④그래도 0개면 두 단계 위(20쪽, 예: 열무→채소류, 한우→축산물). 이름 규칙(must/not/kr)은 그대로 → 원재료 단어 들어간 상품은 넣고 반찬·가공품은 뺌.
+- 반찬 모아 보기: ps1이 `shop.banchan = {kinds, items}` (볶음·조림·무침·나물·장아찌·절임·반찬세트·김치·젓갈·게장·장, 종류당 15개, 양념·육수·밀키트 제외). groups 밖이라 v0.4 품목 상품엔 안 섞임. 앱 `src/Banchan.tsx` 메인 '🍱 오늘 반찬 고르기' 카드(종류 8칸 + 맛보기 줄 + 전체 보기 시트). 이벤트 banchan_opened·banchan_kind_selected·shop_clicked(from=banchan). banchan 없으면 카드 숨김.
+- v0.5.0 .ait 이 내용으로 20:48 다시 빌드(배너 포함 확인). ⚠ 새 ps1 사장님 PC에 덮어써야 함.
+- 이미지로 고르기: PC 스크립트에서 사진 판별은 못 함 → 이름 규칙 + 매일 아침 점검(사람 눈 대신 Claude)으로 걸러냄.
+- 예약 작업 '오늘밥상물가 아침 점검' 매일 10:17(한국) 클라우드 실행 (trig_015LsJ4qwXYsb4eqTpS7W9Y1): shop.json·latest.json 점검 → 규칙 고쳐 푸시 → 보고. 출시·광고·정산은 안 건드림.
+
 ## 전국 가격 = KAMIS 전체지역 평균 (10/28 수정)
 - 발견: KAMIS 사이트 10/27 배추 전국 평균 4,405원 vs 앱 4,270원. 앱이 '조사 도시별 평균의 평균'을 내고 있었음(서울 4,324원은 KAMIS 서울 시장 8곳 평균과 정확히 일치).
 - 수정: `collect.ts`에 `NATIONAL='nat'` — 지역코드 없이 요청하면 KAMIS '전체지역'(Open-API 문서 확인). q.all은 이 값, 없을 때만 도시 평균. 옛 기록 파일에도 nat 값 받아 채움(addNational) → 1개월 전·30일 평균·전국 그래프도 KAMIS 기준.

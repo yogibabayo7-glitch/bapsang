@@ -176,6 +176,8 @@ export type TrackEvent =
   | 'kimjang_opened'
   | 'cabbage_opened' // 배추 종류별 보기 열기
   | 'cabbage_kind_selected' // 배추 산지·종류 칩 누름
+  | 'banchan_opened' // 반찬 카드에서 종류·전체 보기 누름
+  | 'banchan_kind_selected' // 반찬 시트에서 종류 칩 누름
   | 'cheap_filter_opened' // "평소보다 싸요" 필터 누름
   | 'shop_clicked' // 토스쇼핑 상품 누름 (보상 없음)
   | 'compare_regions_tapped' // '다른 지역은 얼마?' 버튼 누름
