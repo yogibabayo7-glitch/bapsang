@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build && ait build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "deploy": "ait deploy"
+    "deploy": "ait deploy",
+    "shop-rules": "node --experimental-strip-types scripts/shop-rules.ts"
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "3.9.0",

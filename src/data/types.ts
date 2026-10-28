@@ -37,4 +37,6 @@ export type Shop = {
   disclosure: string;
   pages?: { fresh?: string; deals?: string };
   groups: Record<string, ShopItem[]>;
+  // 품목 id → 그 품목 카테고리에서 이름 규칙으로 고른 상품 (10/28~, 없으면 예전 shop.json)
+  items?: Record<string, ShopItem[]>;
 };

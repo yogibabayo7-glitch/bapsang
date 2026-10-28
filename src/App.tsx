@@ -317,7 +317,7 @@ export default function App() {
             {!isKimjangSeason() && (
               <ShopStrip
                 shop={shop}
-                items={productsFor(shop, bestBuys[0].name, bestBuys[0].cat, 10)}
+                items={productsFor(shop, bestBuys[0].id, 10)}
                 title={`🛍️ ${josa(bestBuys[0].name, '이', '가')} 쌀 때 토스쇼핑에서 보기`}
                 from="best"
                 showFresh
@@ -710,7 +710,7 @@ function Detail({
               : '💡 최근 평균 수준이에요.'}
         </p>
         <RegionCompare book={book} row={row} region={region} />
-        <ShopStrip shop={shop} items={productsFor(shop, row.name, row.cat)} title={`🛍️ 토스쇼핑에서 ${row.name} 보기`} from="detail" />
+        <ShopStrip shop={shop} items={productsFor(shop, row.id)} title={`🛍️ 토스쇼핑에서 ${row.name} 보기`} from="detail" />
         <Banner />
         <button className="btn full" onClick={onClose}>
           닫기

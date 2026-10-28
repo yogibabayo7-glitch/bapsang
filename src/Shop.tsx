@@ -1,29 +1,28 @@
 // 토스쇼핑 상품 카드 (쉐어링크). 클릭에 보상을 주면 안 돼요 — 순수한 상품 연결만.
 import { DOMESTIC_RE, IMPORTED_RE } from './data/catalog';
+import { SHOP_IMPORT_RE, SHOP_RULES } from './data/shopRules';
 import type { Shop, ShopItem } from './data/types';
 import { openLink, track } from './platform';
 
-const CAT_GROUP: Record<string, string> = {
-  grain: 'grain',
-  veg: 'veg',
-  mush: 'veg',
-  fruit: 'fruit',
-  meat: 'meat',
-  fish: 'fish',
-  spice: 'spice',
-};
+// 이 품목 상품이 맞나? — 그 품목 토스쇼핑 카테고리 상품이면서 이름 규칙(must/not/kr)을 통과해야 해요
+export function matchesItem(id: string, p: ShopItem): boolean {
+  const r = SHOP_RULES[id];
+  if (!r) return false;
+  if (p.cat && !r.cats.some((c) => c.split(' > ').pop() === p.cat)) return false;
+  return (
+    new RegExp(r.must, 'i').test(p.name) &&
+    !(r.not && new RegExp(r.not, 'i').test(p.name)) &&
+    !(r.kr && new RegExp(SHOP_IMPORT_RE, 'i').test(p.name))
+  );
+}
 
-// 품목 이름이 들어간 상품 찾기. 한 글자 이름(무, 배, 굴…)은 다른 글자에 붙어 있으면 빼요.
-export function productsFor(shop: Shop | null, name: string, cat: string, limit = 8): ShopItem[] {
+// 품목 상세의 상품: 그 품목 상품만 (상추면 상추, 콩이면 콩). 맞는 상품이 없으면 빈 목록 → 칸을 숨겨요.
+// 10/28 전에는 못 찾으면 같은 분류(채소·과일…)의 아무 상품이나 보여줘서 엉뚱한 상품이 나왔어요.
+export function productsFor(shop: Shop | null, id: string, limit = 8): ShopItem[] {
   if (!shop) return [];
-  const all = Object.values(shop.groups).flat();
-  const key = name.replace(/\(.*\)/, '').replace(/^(한우|수입|돼지|국산)\s*/, '').trim();
-  const re =
-    key.length <= 1 ? new RegExp(`(^|[^가-힣])${key}([^가-힣]|$)`) : new RegExp(key.split(/\s+/).join('.*'));
   const seen = new Set<string>();
-  const hit = all.filter((p) => re.test(p.name) && !seen.has(p.id) && seen.add(p.id));
-  if (hit.length) return hit.slice(0, limit);
-  return (shop.groups[CAT_GROUP[cat] ?? 'veg'] ?? []).slice(0, limit);
+  const pool = [...(shop.items?.[id] ?? []), ...Object.values(shop.groups).flat()];
+  return pool.filter((p) => matchesItem(id, p) && !seen.has(p.id) && seen.add(p.id)).slice(0, limit);
 }
 
 // 김장 재료: 수입·중국산은 빼고, '국산/국내산'이나 산지가 적힌 상품을 앞으로
@@ -70,14 +69,16 @@ export function ShopStrip({
   from: string;
   showFresh?: boolean;
 }) {
-  if (!shop || !items.length) return null;
+  const fresh = showFresh ? shop?.pages?.fresh : undefined;
+  if (!shop || (!items.length && !fresh)) return null;
   const open = (p: ShopItem) => {
     track('shop_clicked', { from, item: p.id });
     void openLink(p.url);
   };
   return (
     <div className="shop">
-      <h3>{title}</h3>
+      {items.length > 0 && <h3>{title}</h3>}
+      {items.length > 0 && (
       <div className="shopRow">
         {items.map((p) => (
           <button key={p.id} className="shopItem" onClick={() => open(p)}>
@@ -89,12 +90,13 @@ export function ShopStrip({
           </button>
         ))}
       </div>
-      {showFresh && shop.pages?.fresh && (
+      )}
+      {fresh && (
         <button
           className="btn ghost full shopMore"
           onClick={() => {
             track('shop_clicked', { from, item: 'fresh' });
-            void openLink(shop.pages!.fresh!);
+            void openLink(fresh);
           }}
         >
           🥬 토스쇼핑 신선식품 더 보기

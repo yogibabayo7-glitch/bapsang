@@ -75,13 +75,9 @@ function Api($method, $path, $body) {
 $Groups = [ordered]@{
   kimjang = @('절임배추', '김장', '젓갈', '고춧가루', '액젓', '김치')
   cabbage = @('절임배추', '배추', '김장', '김치', '채소')
-  veg     = @('채소', '야채', '나물')
-  fruit   = @('과일')
-  meat    = @('정육', '돼지고기', '소고기', '한우', '닭고기', '계란', '달걀')
-  fish    = @('수산', '생선', '해산물', '건어물', '김/해조')
-  grain   = @('쌀', '잡곡', '견과')
-  spice   = @('양념', '소스', '장류', '조미료', '소금', '참기름', '식용유')
 }
+# 10/28: 채소·과일·고기·생선·곡물·양념 묶음은 더 이상 넓은 카테고리 키워드로 모으지 않아요
+#  (토마토주스·율무차·아보카도유김 같은 엉뚱한 상품이 섞였음) → 아래 '품목별 상품'에서 만들어요
 # 묶음별 규칙
 #  cabbage : '배추 종류별 보기' 화면용. 이름에 '배추'가 든 상품만, 다른 묶음과 겹쳐도 돼요, 최대 30개
 #  kimjang·cabbage : 김장 재료는 국산만 — 이름에 수입/중국산 등이 있으면 빼고, '국산/국내산'을 앞에
@@ -92,6 +88,14 @@ $MaxItems = @{ cabbage = 30 }
 $ImportRe = '수입|중국|외국산|미국산|호주산|베트남|칠레산|러시아산|노르웨이|뉴질랜드|태국산|인도산'
 $KrRe     = '국산|국내산|국내|해남|괴산|강원|고랭지|평창|태백|정선|영월|홍천|강릉|횡성|진도|신안|영암|무안|부안|고창|청송|충북|전남|전북'
 $Links    = @{}
+# 한 번 만든 쉐어링크는 저장해 두고 다시 써요 (매일 수백 개를 새로 만들지 않게)
+$LinkCacheFile = Join-Path $Here 'link-cache.json'
+if (Test-Path $LinkCacheFile) {
+  try {
+    $lc = [IO.File]::ReadAllText($LinkCacheFile, [Text.Encoding]::UTF8) | ConvertFrom-Json
+    foreach ($p in $lc.PSObject.Properties) { if ($p.Value) { $Links[$p.Name] = [string]$p.Value } }
+  } catch { Log "링크 저장 파일을 못 읽어서 새로 만들어요." }
+}
 
 # 김장 묶음은 재료별 정확한 카테고리에서 골고루 (10/28: 예전엔 절임배추가 12개 중 10개를 차지했어요)
 #  재료 순서대로 1위 상품을 하나씩 → 다 돌면 2위를 하나씩… 그래서 앞 10개에 재료가 한 개씩 나와요
@@ -212,6 +216,104 @@ foreach ($g in $Groups.Keys) {
   Log "$g : 카테고리 $($picked.Count)개 → 상품 $($list.Count)개"
 }
 
+# ── 품목별 상품 (10/28) ──
+# 앱 '전체 시세'에서 품목을 누르면 그 품목 상품만 보여요. 상추면 상추, 콩이면 콩, 쌀이면 쌀.
+# 규칙표(shop-rules.json)는 GitHub에서 매일 내려받아요 → 규칙을 고칠 땐 이 파일을 다시 깔 필요 없어요.
+#  cats  : 이 토스쇼핑 카테고리 인기 상품에서만 고름
+#  must  : 상품 이름에 꼭 있어야 하는 말 / not : 있으면 빼는 말 / kr : 수입·중국산 빼기 / prefer : 앞으로
+function Get-Link($it) {
+  $key = [string]$it.tacaItemId
+  if (-not $Links.ContainsKey($key)) {
+    try {
+      $Links[$key] = (Api 'POST' '/links' @{ landingType = 'PRODUCT'; tacaItemId = [long]$it.tacaItemId; publisherId = $cfg.publisherId }).shortUrl
+    } catch { Log "링크 발급 실패 $key : $_"; return $null }
+  }
+  return $Links[$key]
+}
+
+$RulesFile = Join-Path $Here 'shop-rules.json'
+$RulesUrl = "https://raw.githubusercontent.com/$Repo/main/docs/data/shop-rules.json"
+$rules = $null
+try {
+  $rr = Invoke-WebRequest -UseBasicParsing -Uri $RulesUrl
+  $txt = [Text.Encoding]::UTF8.GetString($rr.RawContentStream.ToArray())
+  $rules = $txt | ConvertFrom-Json
+  [IO.File]::WriteAllText($RulesFile, $txt, (New-Object Text.UTF8Encoding $false))
+} catch {
+  Log "품목 규칙을 내려받지 못했어요. 저장해 둔 규칙을 써요. ($($_.Exception.Message))"
+  if (Test-Path $RulesFile) { try { $rules = [IO.File]::ReadAllText($RulesFile, [Text.Encoding]::UTF8) | ConvertFrom-Json } catch {} }
+}
+
+$itemsOut = [ordered]@{}
+$BestCache = @{}
+if ($rules -and $rules.items) {
+  $ruleImport = if ($rules.importRe) { [string]$rules.importRe } else { $ImportRe }
+  $noProduct = New-Object System.Collections.ArrayList
+  foreach ($r in $rules.items) {
+    $max = if ($r.max) { [int]$r.max } else { 4 }
+    $cands = New-Object System.Collections.ArrayList
+    $ids = @{}
+    foreach ($suf in @($r.cats)) {
+      $c = $food | Where-Object { $_.path -like "* > $suf" } | Select-Object -First 1
+      if (-not $c) { Log "품목 카테고리 못 찾음: $($r.name) ($suf)"; continue }
+      if (-not $BestCache.ContainsKey($c.id)) {
+        try { $BestCache[$c.id] = @((Api 'GET' "/products/best-categories/$($c.id)?size=50" $null).items) }
+        catch { Log "카테고리 $($c.path) 조회 실패: $_"; $BestCache[$c.id] = @() }
+      }
+      foreach ($it in $BestCache[$c.id]) {
+        $id = [string]$it.tacaItemId
+        $nm = [string]$it.displayName
+        if ($ids.ContainsKey($id)) { continue }
+        if ($it.isSoldOut -or $Block -contains $id -or -not $it.thumbnailUrl) { continue }
+        if ($nm -notmatch [string]$r.must) { continue }
+        if ($r.not -and $nm -match [string]$r.not) { continue }
+        if ($r.kr -and $nm -match $ruleImport) { continue }
+        $ids[$id] = $true
+        $pref = if ($r.prefer -and $nm -match [string]$r.prefer) { 0 } elseif ($r.kr -and $nm -match $AppKrRe) { 0 } else { 1 }
+        [void]$cands.Add([pscustomobject]@{ it = $it; cat = $c.name; rank = [int]$it.rank; pref = $pref })
+      }
+    }
+    $list = New-Object System.Collections.ArrayList
+    foreach ($x in @($cands | Sort-Object pref, rank | Select-Object -First $max)) {
+      $url = Get-Link $x.it
+      if (-not $url) { continue }
+      [void]$list.Add([ordered]@{
+        id    = [string]$x.it.tacaItemId
+        name  = $x.it.displayName
+        thumb = $x.it.thumbnailUrl
+        url   = $url
+        cat   = $x.cat
+        price = $x.it.displayPrice
+        review = $x.it.reviewCount
+      })
+    }
+    $itemsOut[[string]$r.id] = @($list)
+    if (-not $list.Count) { [void]$noProduct.Add([string]$r.name) }
+  }
+  $withProd = @($itemsOut.Keys | Where-Object { $itemsOut[$_].Count -gt 0 }).Count
+  Log "품목별 상품: $($rules.items.Count)개 품목 중 $withProd 개에 상품 있음 (카테고리 $($BestCache.Count)개 조회)"
+  if ($noProduct.Count) { Log "상품 없는 품목(앱에서 칸 숨김): $($noProduct -join ', ')" }
+
+  # 예전 버전 앱(v0.4)도 엉뚱한 상품이 안 나오게, 카테고리 묶음을 품목별 상품으로 다시 채워요
+  #  (예전 앱은 묶음 안에서 이름으로 찾고, 못 찾으면 같은 묶음 상품을 보여줘요)
+  $CatToGroup = @{ grain = 'grain'; veg = 'veg'; mush = 'veg'; fruit = 'fruit'; meat = 'meat'; fish = 'fish'; spice = 'spice' }
+  foreach ($g in 'veg', 'fruit', 'meat', 'fish', 'grain', 'spice') {
+    $gl = New-Object System.Collections.ArrayList
+    $gseen = @{}
+    foreach ($r in $rules.items) {
+      if ($CatToGroup[[string]$r.cat] -ne $g) { continue }
+      foreach ($p in @($itemsOut[[string]$r.id] | Select-Object -First 2)) {
+        if ($gseen.ContainsKey($p.id)) { continue }
+        $gseen[$p.id] = $true
+        [void]$gl.Add($p)
+      }
+    }
+    $out[$g] = @($gl)
+  }
+} else {
+  Log '품목 규칙이 없어서 품목별 상품은 이번엔 건너뛰어요.'
+}
+
 # 지면 링크 (오아시스 신선식품, 특가)
 $pages = [ordered]@{}
 try { $pages.fresh = (Api 'POST' '/links' @{ landingType = 'FRESH_FOOD'; publisherId = $cfg.publisherId }).shortUrl } catch { Log "신선식품 지면 링크 실패: $_" }
@@ -225,8 +327,17 @@ $shop = [ordered]@{
   disclosure = '토스쇼핑 쉐어링크 활동으로, 구매 시 일정액의 수수료를 받을 수 있어요'
   pages      = $pages
   groups     = $out
-  categories = @($food | ForEach-Object { [ordered]@{ id = $_.id; path = $_.path } })
+  items      = $itemsOut
+  # 앱은 안 쓰지만 규칙 만들 때 참고용 (장보기 관련 카테고리만 — 파일 크기 줄이기)
+  categories = @($food | Where-Object { $_.path -match '신선식품|조미료|젓갈|액젓|소금|우유' } | ForEach-Object { [ordered]@{ id = $_.id; path = $_.path } })
 }
+
+# 링크 저장 (다음 실행 때 다시 씀)
+try {
+  $lcOut = [ordered]@{}
+  foreach ($k in $Links.Keys) { $lcOut[$k] = $Links[$k] }
+  [IO.File]::WriteAllText($LinkCacheFile, ($lcOut | ConvertTo-Json -Compress), (New-Object Text.UTF8Encoding $false))
+} catch { Log "링크 저장 파일을 쓰지 못했어요: $($_.Exception.Message)" }
 $json = $shop | ConvertTo-Json -Depth 8 -Compress
 
 # ── 3. GitHub에 올리기 ──
