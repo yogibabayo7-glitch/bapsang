@@ -249,17 +249,30 @@ $BestCache = @{}
 if ($rules -and $rules.items) {
   $ruleImport = if ($rules.importRe) { [string]$rules.importRe } else { $ImportRe }
   $noProduct = New-Object System.Collections.ArrayList
+  # 같은 상품의 용량·수량만 다른 것(5kg 1개 / 5kg 2개 …)은 뒤로 미뤄요 → 앞쪽엔 종류가 다른 상품이 고루
+  function Base-Name($nm) {
+    $b = $nm -replace '\(.*?\)', ' '
+    $b = $b -replace '[\d.,~\-+/]+\s*(kg|g|ml|l|cm|mm|개입|개|봉지|봉|팩|입|박스|구|미|과|수|매|통|망|단|세트|마리|포기|근|번과|brix)?', ' '
+    $b = $b -replace '(특대|대과|중대과|중과|소과|특품|특|상|중|소|대|왕|가정용|선물용|1\+\+|1\+)(\s|,|$)', ' '
+    return (($b -replace '[,\s]+', ' ').Trim())
+  }
+  $prodById = [ordered]@{}
   foreach ($r in $rules.items) {
-    $max = if ($r.max) { [int]$r.max } else { 4 }
-    $cands = New-Object System.Collections.ArrayList
+    $max = if ($r.max) { [int]$r.max } else { 12 }
+    $byCat = [ordered]@{}
     $ids = @{}
     foreach ($suf in @($r.cats)) {
       $c = $food | Where-Object { $_.path -like "* > $suf" } | Select-Object -First 1
       if (-not $c) { Log "품목 카테고리 못 찾음: $($r.name) ($suf)"; continue }
       if (-not $BestCache.ContainsKey($c.id)) {
-        try { $BestCache[$c.id] = @((Api 'GET' "/products/best-categories/$($c.id)?size=50" $null).items) }
-        catch { Log "카테고리 $($c.path) 조회 실패: $_"; $BestCache[$c.id] = @() }
+        # 인기 상품을 넉넉히 100개 (안 되면 50개)
+        try { $BestCache[$c.id] = @((Api 'GET' "/products/best-categories/$($c.id)?size=100" $null).items) }
+        catch {
+          try { $BestCache[$c.id] = @((Api 'GET' "/products/best-categories/$($c.id)?size=50" $null).items) }
+          catch { Log "카테고리 $($c.path) 조회 실패: $_"; $BestCache[$c.id] = @() }
+        }
       }
+      $mine = New-Object System.Collections.ArrayList
       foreach ($it in $BestCache[$c.id]) {
         $id = [string]$it.tacaItemId
         $nm = [string]$it.displayName
@@ -270,42 +283,64 @@ if ($rules -and $rules.items) {
         if ($r.kr -and $nm -match $ruleImport) { continue }
         $ids[$id] = $true
         $pref = if ($r.prefer -and $nm -match [string]$r.prefer) { 0 } elseif ($r.kr -and $nm -match $AppKrRe) { 0 } else { 1 }
-        [void]$cands.Add([pscustomobject]@{ it = $it; cat = $c.name; rank = [int]$it.rank; pref = $pref })
+        [void]$mine.Add([pscustomobject]@{ it = $it; cat = $c.name; rank = [int]$it.rank; pref = $pref; base = (Base-Name $nm) })
+      }
+      $byCat[$c.name] = @($mine | Sort-Object pref, rank)
+    }
+    # 1차: 이름이 겹치지 않는 상품을 카테고리마다 번갈아 (밤고구마→호박고구마→꿀고구마→…)
+    # 2차: 자리가 남으면 용량만 다른 상품으로 채워요
+    $chosen = New-Object System.Collections.ArrayList
+    $bases = @{}
+    $used = @{}
+    $more = $true
+    for ($i = 0; $more -and $chosen.Count -lt $max; $i++) {
+      $more = $false
+      foreach ($k in @($byCat.Keys)) {
+        $arr = @($byCat[$k] | Where-Object { -not $used.ContainsKey([string]$_.it.tacaItemId) -and -not $bases.ContainsKey($_.base) })
+        if (-not $arr.Count) { continue }
+        $more = $true
+        $x = $arr[0]
+        $used[[string]$x.it.tacaItemId] = $true; $bases[$x.base] = $true
+        [void]$chosen.Add($x)
+        if ($chosen.Count -ge $max) { break }
       }
     }
-    $list = New-Object System.Collections.ArrayList
-    foreach ($x in @($cands | Sort-Object pref, rank | Select-Object -First $max)) {
-      $url = Get-Link $x.it
-      if (-not $url) { continue }
-      [void]$list.Add([ordered]@{
-        id    = [string]$x.it.tacaItemId
-        name  = $x.it.displayName
-        thumb = $x.it.thumbnailUrl
-        url   = $url
-        cat   = $x.cat
-        price = $x.it.displayPrice
-        review = $x.it.reviewCount
-      })
+    if ($chosen.Count -lt $max) {
+      $rest = @($byCat.Values | ForEach-Object { $_ } | Where-Object { -not $used.ContainsKey([string]$_.it.tacaItemId) } | Sort-Object pref, rank)
+      foreach ($x in $rest) { if ($chosen.Count -ge $max) { break }; $used[[string]$x.it.tacaItemId] = $true; [void]$chosen.Add($x) }
     }
+    $list = New-Object System.Collections.ArrayList
+    foreach ($x in $chosen) {
+      $prodId = [string]$x.it.tacaItemId
+      if (-not $prodById.Contains($prodId)) {
+        $url = Get-Link $x.it
+        if (-not $url) { continue }
+        $prodById[$prodId] = [ordered]@{ id = $prodId; name = $x.it.displayName; thumb = $x.it.thumbnailUrl; url = $url; cat = $x.cat }
+      }
+      [void]$list.Add($prodId)
+    }
+    # shop.json에는 상품 번호만 (상품 내용은 아래 묶음에 한 번만 넣어 파일을 작게)
     $itemsOut[[string]$r.id] = @($list)
     if (-not $list.Count) { [void]$noProduct.Add([string]$r.name) }
   }
   $withProd = @($itemsOut.Keys | Where-Object { $itemsOut[$_].Count -gt 0 }).Count
-  Log "품목별 상품: $($rules.items.Count)개 품목 중 $withProd 개에 상품 있음 (카테고리 $($BestCache.Count)개 조회)"
+  $sumProd = ($itemsOut.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
+  Log "품목별 상품: $($rules.items.Count)개 품목 중 $withProd 개에 상품 있음, 모두 $sumProd 개 (카테고리 $($BestCache.Count)개 조회)"
   if ($noProduct.Count) { Log "상품 없는 품목(앱에서 칸 숨김): $($noProduct -join ', ')" }
 
-  # 예전 버전 앱(v0.4)도 엉뚱한 상품이 안 나오게, 카테고리 묶음을 품목별 상품으로 다시 채워요
-  #  (예전 앱은 묶음 안에서 이름으로 찾고, 못 찾으면 같은 묶음 상품을 보여줘요)
+  # 품목별 상품 내용은 분류 묶음(veg·fruit·meat·fish·grain·spice)에 전부 넣어요
+  #  - 새 앱: items의 상품 번호로 여기서 찾아요
+  #  - 예전 앱(v0.4): 묶음 안에서 이름으로 찾으니, 묶음에 상품이 많을수록 품목마다 많이 나와요
   $CatToGroup = @{ grain = 'grain'; veg = 'veg'; mush = 'veg'; fruit = 'fruit'; meat = 'meat'; fish = 'fish'; spice = 'spice' }
   foreach ($g in 'veg', 'fruit', 'meat', 'fish', 'grain', 'spice') {
     $gl = New-Object System.Collections.ArrayList
     $gseen = @{}
     foreach ($r in $rules.items) {
       if ($CatToGroup[[string]$r.cat] -ne $g) { continue }
-      foreach ($p in @($itemsOut[[string]$r.id] | Select-Object -First 2)) {
-        if ($gseen.ContainsKey($p.id)) { continue }
-        $gseen[$p.id] = $true
-        [void]$gl.Add($p)
+      foreach ($prodId in @($itemsOut[[string]$r.id])) {
+        if ($gseen.ContainsKey($prodId)) { continue }
+        $gseen[$prodId] = $true
+        [void]$gl.Add($prodById[$prodId])
       }
     }
     $out[$g] = @($gl)

@@ -38,5 +38,6 @@ export type Shop = {
   pages?: { fresh?: string; deals?: string };
   groups: Record<string, ShopItem[]>;
   // 품목 id → 그 품목 카테고리에서 이름 규칙으로 고른 상품 (10/28~, 없으면 예전 shop.json)
-  items?: Record<string, ShopItem[]>;
+  // 10/28 저녁부터는 상품 번호 목록 (상품 내용은 groups에 한 번만)
+  items?: Record<string, (string | ShopItem)[]>;
 };

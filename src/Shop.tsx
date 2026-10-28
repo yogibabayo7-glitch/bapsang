@@ -18,10 +18,16 @@ export function matchesItem(id: string, p: ShopItem): boolean {
 
 // 품목 상세의 상품: 그 품목 상품만 (상추면 상추, 콩이면 콩). 맞는 상품이 없으면 빈 목록 → 칸을 숨겨요.
 // 10/28 전에는 못 찾으면 같은 분류(채소·과일…)의 아무 상품이나 보여줘서 엉뚱한 상품이 나왔어요.
-export function productsFor(shop: Shop | null, id: string, limit = 8): ShopItem[] {
+export function productsFor(shop: Shop | null, id: string, limit = 12): ShopItem[] {
   if (!shop) return [];
+  const all = Object.values(shop.groups).flat();
+  const byId = new Map(all.map((p) => [p.id, p]));
+  // items: 수집기가 종류가 고루 섞이게 고른 순서 그대로 먼저, 그다음 묶음에서 규칙에 맞는 상품
+  const picked = (shop.items?.[id] ?? [])
+    .map((x) => (typeof x === 'string' ? byId.get(x) : x))
+    .filter((p): p is ShopItem => !!p);
   const seen = new Set<string>();
-  const pool = [...(shop.items?.[id] ?? []), ...Object.values(shop.groups).flat()];
+  const pool = [...picked, ...all];
   return pool.filter((p) => matchesItem(id, p) && !seen.has(p.id) && seen.add(p.id)).slice(0, limit);
 }
 
