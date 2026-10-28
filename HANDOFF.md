@@ -13,6 +13,13 @@
     - 코드: `src/platform.ts`(preloadAds·maybeShowInterstitial·showRewarded), `src/App.tsx`(RegionCompare).
 - **밥값 챌린지** `babgap-challenge` — 소스는 이 저장소에 없음(작업 컨테이너의 /home/claude/babgap-challenge, 재구성본). v1.3(토스 적금 보러 가기 버튼, 링크 https://toss.im/_m/7VUPezk2) 검토 중.
 
+## 전국 가격 = KAMIS 전체지역 평균 (10/28 수정)
+- 발견: KAMIS 사이트 10/27 배추 전국 평균 4,405원 vs 앱 4,270원. 앱이 '조사 도시별 평균의 평균'을 내고 있었음(서울 4,324원은 KAMIS 서울 시장 8곳 평균과 정확히 일치).
+- 수정: `collect.ts`에 `NATIONAL='nat'` — 지역코드 없이 요청하면 KAMIS '전체지역'(Open-API 문서 확인). q.all은 이 값, 없을 때만 도시 평균. 옛 기록 파일에도 nat 값 받아 채움(addNational) → 1개월 전·30일 평균·전국 그래프도 KAMIS 기준.
+- 10/27 재수집 확인: 전국 배추 4,405 / 1일전 4,437 / 7일전 5,337 = KAMIS 사이트와 일치. KAMIS 사이트의 1개월전·1년전 칸은 5일 이동평균이라 앱(그날 값) 6,419·5,432와 다름(사이트 6,144·5,471).
+- 김장 비용 바뀜: 305,400 → 313,770원(20포기), 작년 대비 -20,170원(-6.0%). 10/28 이전 스레드 글·첫 블로그 사진은 옛 숫자(305,400·7%·4,270·33%)였음.
+- 경기·강원 등 도 단위는 여전히 조사 도시 평균(지역 시트에 안내 있음).
+
 ## 데이터 파이프라인
 - GitHub Actions "시세 수집"(`.github/workflows/collect.yml`) → `scripts/collect.ts` → `docs/data/latest.json`, `hist/{지역}.json` (Pages로 서비스).
 - 한 달 전·1년 전 가격이 비면 KAMIS 과거 날짜를 받아 `data/past/`에 저장해 채움 (10/27 추가, 정상 동작 확인).
