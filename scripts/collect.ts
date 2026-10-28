@@ -283,6 +283,31 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
       return;
     }
   };
+  // 예전 기록(전국 값을 따로 받기 전)에 KAMIS 전체지역 값이 없으면 그날 것을 받아 기록에 더해요
+  const addNational = async (d: string) => {
+    const file = `${dirOf(d)}/${d}.json`;
+    const rec = JSON.parse(readFileSync(file, 'utf8')) as { date: string; q: Record<string, Record<string, number>> };
+    if (rec.q[NATIONAL] && Object.keys(rec.q[NATIONAL]).length) return;
+    const rows: Row[] = [];
+    try {
+      for (const cat of CATS) {
+        const raw = await fetchRows(NATIONAL, cat, d);
+        if (raw) rows.push(...raw.map((r) => parseRow(r, cat)));
+      }
+    } catch (e) {
+      console.log('전국 과거 값 받기 실패', d, e);
+      return;
+    }
+    const m: Record<string, number> = {};
+    for (const c of chosen) {
+      const r = rows.find((x) => x.code === c.entry.code && x.kind === c.kind && x.rank === c.rank && x.now);
+      if (r?.now) m[c.entry.id] = r.now;
+    }
+    if (!Object.keys(m).length) return;
+    rec.q[NATIONAL] = m;
+    writeFileSync(file, JSON.stringify(rec));
+    console.log(`전국 과거 값 추가: ${d} (${Object.keys(m).length}개)`);
+  };
   let snapDays = listDays();
   const nearest = (target: string) => {
     const t = new Date(target + 'T00:00:00Z').getTime();
@@ -317,6 +342,7 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
     }
     const near = nearest(target);
     if (!near || near === day) continue;
+    await addNational(near);
     const snapQ = (JSON.parse(readFileSync(`${dirOf(near)}/${near}.json`, 'utf8')) as { q: Record<string, Record<string, number>> }).q;
     for (const region of regionCodes)
       for (const [id, v] of Object.entries(q[region])) if (v[idx] == null && snapQ[region]?.[id]) v[idx] = snapQ[region][id];
@@ -328,6 +354,7 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
   const AVG_IDX = KEYS.length;
   const dayMs = (d: string) => new Date(d + 'T00:00:00Z').getTime();
   const ago = (n: number) => new Date(dayMs(day) - n * 86400000).toISOString().slice(0, 10);
+  for (const d of [...new Set(listDays())].filter((d) => d < day && d >= ago(30))) await addNational(d);
   const recent = [...new Set(listDays())]
     .filter((d) => d < day && d >= ago(30))
     .map((d) => ({ d, q: (JSON.parse(readFileSync(`${dirOf(d)}/${d}.json`, 'utf8')) as { q: Record<string, Record<string, number>> }).q }));
@@ -423,7 +450,9 @@ export async function collect(fetchRows: FetchRows, opts: { day?: string; now?: 
   for (const r of regions) {
     const points: Record<string, [string, number][]> = {};
     for (const s of snaps) {
-      for (const [id, p] of Object.entries(s.q[r.id] ?? {})) (points[id] ??= []).push([s.date, p]);
+      // 전국 그래프는 KAMIS 전체지역 기록으로 (있으면)
+      const src = r.id === 'all' && s.q[NATIONAL] && Object.keys(s.q[NATIONAL]).length ? s.q[NATIONAL] : s.q[r.id];
+      for (const [id, p] of Object.entries(src ?? {})) (points[id] ??= []).push([s.date, p]);
     }
     writeFileSync(`${OUT}/hist/${r.id}.json`, JSON.stringify({ region: r.id, points }));
   }
