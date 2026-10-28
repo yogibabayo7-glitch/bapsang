@@ -141,9 +141,28 @@ if (bad) {
   process.exit(1);
 }
 
+// 예전 앱(v0.4)용 순서: v0.4는 품목 이름이 들어간 상품을 묶음 순서대로 앞에서부터 보여줘요.
+// 'A 이름으로 찾으면 B 상품도 걸리는' 경우(배추→양배추, 토마토→방울토마토, 새우→새우젓…) A 상품을 B보다 앞에 둬요.
+const oldKey = (name: string) => name.replace(/\(.*\)/, '').replace(/^(한우|수입|돼지|국산)\s*/, '').trim();
+const oldRe = (name: string) => {
+  const k = oldKey(name);
+  return k.length <= 1 ? new RegExp(`(^|[^가-힣])${k}([^가-힣]|$)`) : new RegExp(k.split(/\s+/).join('.*'));
+};
+const order: string[] = [];
+const left = [...CATALOG];
+while (left.length) {
+  // 다른 남은 품목 중 나를 '먼저 와야 할' 품목이 없는 것부터
+  const i = left.findIndex((b) => !left.some((a) => a !== b && oldRe(a.name).test(b.name) && !oldRe(b.name).test(a.name)));
+  const [next] = left.splice(i < 0 ? 0 : i, 1);
+  order.push(next.id);
+}
+
 const out = {
   updatedAt: new Date().toISOString(),
   importRe: SHOP_IMPORT_RE,
+  oldAppOrder: order,
+  // 예전 앱이 품목을 찾는 정규식 (PC 스크립트가 실제 상품 이름으로 순서를 다시 맞출 때 씀)
+  oldAppRe: Object.fromEntries(CATALOG.map((c) => [c.id, oldRe(c.name).source])),
   items: CATALOG.map((c) => ({ id: c.id, name: c.name, cat: c.cat, ...SHOP_RULES[c.id] })),
 };
 writeFileSync(new URL('../docs/data/shop-rules.json', import.meta.url), JSON.stringify(out, null, 1) + '\n');
