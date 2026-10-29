@@ -13,6 +13,12 @@
     - 코드: `src/platform.ts`(preloadAds·maybeShowInterstitial·showRewarded), `src/App.tsx`(RegionCompare).
 - **밥값 챌린지** `babgap-challenge` — 소스는 이 저장소에 없음(작업 컨테이너의 /home/claude/babgap-challenge, 재구성본). v1.3(토스 적금 보러 가기 버튼, 링크 https://toss.im/_m/7VUPezk2) 검토 중.
 
+## 10/29 13:37 — 시세 없는 품목도 찾기 + 가나다순 (v0.6.0 다시 빌드)
+- 사장님 지적: 검색창에 '체리' 쳐도 안 나옴. 원인: 10/28 KAMIS에 참외·딸기·복숭아·체리 가격이 없어 latest.json에서 빠짐 → 목록·검색에서 사라지고, 고정한 체리·참외 쇼핑 상품도 볼 곳이 없었음.
+- `src/App.tsx`: CATALOG 중 오늘 시세 없는 품목(`noPrice`)을 검색하면 '오늘 시세 없음' 카드 + 토스쇼핑 상품(ShopStrip, 이벤트 shop_clicked from=no_price). 검색 안 할 땐 목록 아래 '오늘 시세가 없는 품목: 참외 · 딸기 …' 링크(누르면 그 이름으로 검색). 분류 필터(과일 등)·제철 필터 따름.
+- 정렬에 '가나다순' 추가(기본순 다음). 
+- 미리보기 390px 확인, release/bapsang-price-v0.6.0.ait 다시 빌드(배너 ID 포함). v0.5.0 승인 뒤 올리기.
+
 ## 10/29 13:25 — 고정 상품 9개가 엉뚱한 상품(옷·신발·공구)으로 들어간 것 고침
 - 발견: 13:20 shop.json에 피망=맨투맨·롱부츠, 체리=행거, 돼지 앞다리=여성 팬츠, 한우 안심=보냉팩, 양지=티셔츠, 갈비=안경 케이스·임팩트소켓, 꽁치=맨투맨.
 - 원인: 규칙표 pin 번호(토스쇼핑 주소 번호 = 그룹 번호 tacaId)를 먼저 옵션 번호(tacaItemId)로 조회 → 우연히 같은 옵션 번호의 다른 상품이 잡히면 그걸 씀(그룹 조회는 '못 찾은 것'만 했음).

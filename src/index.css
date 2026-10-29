@@ -761,3 +761,12 @@ h2 {
 .kjCartCount { margin: 6px 0 8px; font-size: 13px; color: var(--g700); font-weight: 600; }
 .kjDetailBtn { flex: none; height: 36px; padding: 0 14px; border-radius: 10px; background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; }
 .kjDetailBtn:active { opacity: 0.85; }
+
+/* 오늘 시세 없는 품목 (10/29) */
+.noPrice { margin-top: 12px; padding: 14px; border-radius: 14px; background: var(--g50, #f9fafb); }
+.npHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.npName { font-size: 17px; font-weight: 700; }
+.npTag { font-size: 12px; color: #6b7684; background: #e5e8eb; border-radius: 8px; padding: 3px 8px; white-space: nowrap; }
+.noPrice .hint { margin: 6px 0 0; }
+.npList { margin-top: 12px; line-height: 1.8; }
+.npLink { background: none; border: 0; padding: 0; color: #3182f6; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CATEGORY_LABEL, regionNote, type CategoryId, type Region } from './data/catalog';
+import { CATALOG, CATEGORY_LABEL, regionNote, type CategoryId, type Region } from './data/catalog';
 import { loadHistory, loadPriceBook, loadShop } from './data/source';
 import { CHEAP_RATIO, Q, type History, type Item, type PriceBook, type Shop } from './data/types';
 import { KimjangCard, isKimjangSeason } from './Kimjang';
@@ -9,7 +9,7 @@ import { ICONS, ICON_OF } from './icons';
 import { BANNER_AD_ID, REWARD_AD_ID, attachBanner, getItem, maybeShowInterstitial, preloadAds, setItem, shareText, showRewarded, track } from './platform';
 
 type Compare = 'day' | 'week';
-type Sort = 'basic' | 'down' | 'up';
+type Sort = 'basic' | 'name' | 'down' | 'up';
 type Filter = CategoryId | 'all' | 'season' | 'cheap';
 type Row = Item & { price: number; prev: number | null; diff: number; pct: number; inSeason: boolean; avg30: number | null; cheap: boolean };
 
@@ -188,7 +188,16 @@ export default function App() {
   const listRows = rows
     .filter((r) => (filter === 'all' ? true : filter === 'season' ? r.inSeason : filter === 'cheap' ? r.cheap : r.cat === filter))
     .filter((r) => matches(r.name, query))
-    .sort((a, b) => (sort === 'down' ? a.pct - b.pct : sort === 'up' ? b.pct - a.pct : 0));
+    .sort((a, b) =>
+      sort === 'down' ? a.pct - b.pct : sort === 'up' ? b.pct - a.pct : sort === 'name' ? a.name.localeCompare(b.name, 'ko') : 0,
+    );
+  // 오늘 KAMIS 조사 가격이 없는 품목 (체리·참외 등) — 목록엔 없지만 찾기·토스쇼핑 상품은 보여줘요
+  const noPrice = CATALOG.filter(
+    (c) =>
+      !rows.some((r) => r.id === c.id) &&
+      (filter === 'all' || (filter !== 'season' && filter !== 'cheap' && c.cat === filter) || (filter === 'season' && !!c.season?.includes(month))),
+  );
+  const noPriceHits = query.replace(/\s/g, '') ? noPrice.filter((c) => matches(c.name, query)) : [];
 
   const headline = (() => {
     const parts: string[] = [];
@@ -401,6 +410,7 @@ export default function App() {
             <h2>전체 시세 {rows.length}개</h2>
             <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} aria-label="정렬">
               <option value="basic">기본순</option>
+              <option value="name">가나다순</option>
               <option value="down">많이 내린 순</option>
               <option value="up">많이 오른 순</option>
             </select>
@@ -437,8 +447,35 @@ export default function App() {
             {listRows.map((r) => (
               <ItemRow key={r.id} r={r} />
             ))}
-            {!listRows.length && <li className="empty">찾는 품목이 없어요</li>}
+            {!listRows.length && !noPriceHits.length && <li className="empty">찾는 품목이 없어요</li>}
           </ul>
+          {noPriceHits.map((c) => (
+            <div key={c.id} className="noPrice">
+              <div className="npHead">
+                <span className="npName">
+                  {c.emoji} {c.name}
+                </span>
+                <span className="npTag">오늘 시세 없음</span>
+              </div>
+              <p className="hint">KAMIS가 오늘 조사한 가격이 없어서 시세는 보여드릴 수 없어요.</p>
+              <ShopStrip shop={shop} items={productsFor(shop, c.id)} title={`🛍️ 토스쇼핑에서 ${c.name} 보기`} from="no_price" />
+            </div>
+          ))}
+          {!query && noPrice.length > 0 && (
+            <p className="hint npList">
+              오늘 시세가 없는 품목:{' '}
+              {noPrice.map((c, i) => (
+                <span key={c.id}>
+                  {i > 0 && ' · '}
+                  <button className="npLink" onClick={() => setQuery(c.name)}>
+                    {c.name}
+                  </button>
+                </span>
+              ))}
+              <br />
+              이름을 누르면 토스쇼핑 상품을 볼 수 있어요.
+            </p>
+          )}
         </section>
 
         <Banner />
