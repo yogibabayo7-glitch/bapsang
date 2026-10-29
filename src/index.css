@@ -758,3 +758,5 @@ h2 {
 .kjCartBar { height: 6px; border-radius: 999px; background: var(--g100); overflow: hidden; margin-top: 8px; }
 .kjCartBar span { display: block; height: 100%; background: var(--blue); transition: width 0.3s; }
 .kjCartCount { margin: 6px 0 8px; font-size: 13px; color: var(--g700); font-weight: 600; }
+.kjDetailBtn { flex: none; height: 36px; padding: 0 14px; border-radius: 10px; background: var(--blue); color: #fff; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.kjDetailBtn:active { opacity: 0.85; }

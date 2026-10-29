@@ -312,13 +312,13 @@ export function KimjangCard({
       <div className="listHead">
         <h2>🥬 올해 김장 비용</h2>
         <button
-          className="link"
+          className="kjDetailBtn"
           onClick={() => {
             setOpen(true);
             track('kimjang_opened', { heads });
           }}
         >
-          재료별 보기
+          재료별 보기 ›
         </button>
       </div>
       <div className="kjHeadRow">
