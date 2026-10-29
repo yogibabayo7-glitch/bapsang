@@ -49,4 +49,6 @@ jobs:
           echo "버전: v$VER" >> "$GITHUB_STEP_SUMMARY"
           echo "테스트 링크: $SCHEME" >> "$GITHUB_STEP_SUMMARY"
           echo "TEST_SCHEME=$SCHEME"
+          # 실행 기록 화면·API(주석)에서 바로 보이게
+          echo "::notice title=테스트 링크 v$VER::$SCHEME"
           [ -n "$SCHEME" ] || { echo "테스트 링크를 못 찾았어요 (위 로그 확인)"; exit 1; }
