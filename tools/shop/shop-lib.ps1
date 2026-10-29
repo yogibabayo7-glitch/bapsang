@@ -256,8 +256,23 @@ function Get-Details($ids) {
   }
   return $out
 }
+# 상품 그룹 번호(tacaId = 토스쇼핑 주소 toss.shopping/t/번호의 번호)로 조회 → 대표 옵션. 결과 키는 그룹 번호.
+#  ⚠ 옵션 번호(tacaItemId)와 번호 종류가 달라요. 섞어서 조회하면 우연히 같은 번호의 엉뚱한 상품이 나와요.
+function Get-GroupDetails($ids) {
+  $out = @{}
+  $list = @($ids | Where-Object { $_ } | ForEach-Object { ([string]$_) -replace '^t', '' } | Select-Object -Unique)
+  for ($i = 0; $i -lt $list.Count; $i += 30) {
+    $chunk = @($list[$i..([Math]::Min($i + 29, $list.Count - 1))])
+    try {
+      $res = Api 'GET' "/products/detail?tacaIds=$($chunk -join ',')" $null
+      foreach ($it in @($res.items)) { if ($it -and $it.tacaId) { $out[[string]$it.tacaId] = (Slim $it) } }
+    } catch { Log "상품 그룹 번호 조회 실패($($chunk.Count)개): $_"; foreach ($x in $chunk) { $out[$x] = 'ERR' } }
+  }
+  return $out
+}
 
 # ── 고정 상품 (pins.json, 이 컴퓨터에 저장) ──
+#  번호 앞에 t가 붙은 것(t123)은 상품 그룹 번호(토스쇼핑 주소의 번호), 그냥 숫자는 옵션 번호(검색 목록에서 고른 것)
 #  { "품목id": ["상품번호", ...] }  검색 도구(3_search.bat)로 넣고 빼요. GitHub 규칙표의 pin과 합쳐서 써요.
 $PinsFile = Join-Path $Here 'pins.json'
 function Load-Pins {

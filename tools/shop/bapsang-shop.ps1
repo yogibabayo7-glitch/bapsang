@@ -355,17 +355,25 @@ if ($rules -and $rules.items) {
   $pinDet = @{}
   if ($pinMap.Count) {
     $all = @($pinMap.Values | ForEach-Object { $_ })
-    $pinDet = Get-Details $all
-    # 10/29: 토스쇼핑 주소(toss.shopping/t/번호)의 번호는 상품 그룹 번호(tacaId)예요 (옵션 번호 tacaItemId가 아님).
-    #  옵션 번호로 안 나온 것은 그룹 번호로 다시 조회 → 그 상품의 대표 옵션이 나와요 (링크도 그 옵션으로 발급).
-    $miss = @($all | Where-Object { -not $pinDet.ContainsKey($_) -or $pinDet[$_] -is [string] } | Select-Object -Unique)
-    for ($i = 0; $i -lt $miss.Count; $i += 30) {
-      $chunk = @($miss[$i..([Math]::Min($i + 29, $miss.Count - 1))])
+    # 10/29 13:25 고침: 번호 종류를 섞어 조회하면 안 돼요.
+    #  - 규칙표(GitHub) pin = 토스쇼핑 주소(toss.shopping/t/번호)의 번호 = 상품 그룹 번호(tacaId) → 그룹 번호로만 조회
+    #  - 이 컴퓨터 pins.json(3_search.bat로 고정) = 옵션 번호(tacaItemId) → 옵션 번호로만 조회
+    #  예전엔 그룹 번호를 옵션 번호로 먼저 조회해서, 우연히 같은 옵션 번호를 가진 엉뚱한 상품(맨투맨·롱부츠 등)이 들어갔어요.
+    $grpIds = New-Object System.Collections.ArrayList
+    $optIds = New-Object System.Collections.ArrayList
+    foreach ($r in $rules.items) { foreach ($p in @($r.pin)) { if ($p -and -not ($grpIds -contains [string]$p)) { [void]$grpIds.Add([string]$p) } } }
+    foreach ($k in @($pinsLocal.Keys)) { foreach ($p in @($pinsLocal[$k])) { $p = [string]$p; if ($p -match '^t(\d+)$') { $p = $Matches[1]; if (-not ($grpIds -contains $p)) { [void]$grpIds.Add($p) } } elseif ($p -and -not ($grpIds -contains $p) -and -not ($optIds -contains $p)) { [void]$optIds.Add($p) } } }
+    if ($optIds.Count) { $pinDet = Get-Details @($optIds) }
+    for ($i = 0; $i -lt $grpIds.Count; $i += 30) {
+      $chunk = @($grpIds[$i..([Math]::Min($i + 29, $grpIds.Count - 1))])
       try {
         $res = Api 'GET' "/products/detail?tacaIds=$($chunk -join ',')" $null
-        foreach ($it in @($res.items)) { if ($it) { $pinDet[[string]$it.tacaId] = (Slim $it) } }
-      } catch { Log "고정 상품 그룹 번호 조회 실패($($chunk.Count)개): $_" }
+        foreach ($it in @($res.items)) { if ($it -and $it.tacaId) { $pinDet[[string]$it.tacaId] = (Slim $it) } }
+      } catch { Log "고정 상품 그룹 번호 조회 실패($($chunk.Count)개): $_"; foreach ($x in $chunk) { $pinDet[$x] = 'ERR' } }
     }
+    # pins.json의 't번호'(그룹 번호)도 같은 번호로 찾을 수 있게
+    foreach ($k in @($pinMap.Keys)) { $pinMap[$k] = @($pinMap[$k] | ForEach-Object { if ([string]$_ -match '^t(\d+)$') { $Matches[1] } else { [string]$_ } }) }
+    $all = @($pinMap.Values | ForEach-Object { $_ })
     $gone = @($all | Where-Object { -not $pinDet.ContainsKey($_) } | Select-Object -Unique)
     $sold = @($all | Where-Object { $pinDet.ContainsKey($_) -and -not ($pinDet[$_] -is [string]) -and $pinDet[$_].isSoldOut } | Select-Object -Unique)
     Log "⑥ 고정 상품 $($all.Count)개 확인 (품절 $($sold.Count)개, 판매 끝 $($gone.Count)개는 오늘 빼요)"

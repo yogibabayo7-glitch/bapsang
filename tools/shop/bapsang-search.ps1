@@ -50,17 +50,18 @@ function Show-Pins($rule) {
   if ($pins.Contains([string]$rule.id)) { $ids = @($pins[[string]$rule.id]) }
   $fromRule = @($rule.pin | Where-Object { $_ } | ForEach-Object { [string]$_ })
   if (-not $ids.Count -and -not $fromRule.Count) { Write-Host "  지금 '$($rule.name)' 고정 상품: 없음"; return @() }
-  $det = Get-Details (@($ids) + @($fromRule))
+  $det = Get-Details @($ids | Where-Object { [string]$_ -notmatch '^t\d+$' })
+  $grp = Get-GroupDetails (@($ids | Where-Object { [string]$_ -match '^t\d+$' }) + @($fromRule))
   Write-Host "  지금 '$($rule.name)' 고정 상품:"
   $k = 0
   foreach ($p in $ids) {
     $k++
-    $d = $det[$p]
+    $d = if ([string]$p -match '^t(\d+)$') { $grp[$Matches[1]] } else { $det[$p] }
     $nm = if ($d -and -not ($d -is [string])) { "$($d.displayName)$(if ($d.isSoldOut) { ' (품절)' })" } elseif ($d -is [string]) { '(확인 실패)' } else { '(판매 끝 — 빼 주세요)' }
     Write-Host ("   x{0}  {1}  [{2}]" -f $k, $nm, $p)
   }
   foreach ($p in $fromRule) {
-    $d = $det[$p]
+    $d = $grp[$p]
     $nm = if ($d -and -not ($d -is [string])) { $d.displayName } else { '(판매 끝/확인 실패)' }
     Write-Host ("   (GitHub 규칙표 고정 — 여기선 못 빼요)  {0}  [{1}]" -f $nm, $p)
   }
@@ -161,14 +162,16 @@ while ($true) {
   $target = if ($tn -and $tn.Trim()) { Find-Rule $tn } else { $rule }
   if (-not $target) { if ($tn) { Write-Host "  '$tn' 품목을 못 찾았어요." }; continue }
   $cur = @(Show-Pins $target)
-  $cmd = Read-Host "  '$($target.name)'에 고정할 번호 (예: 1,4 · 빼기 x1 · 상품번호 직접 #2398866849 · 그냥 엔터 = 그대로)"
+  $cmd = Read-Host "  '$($target.name)'에 고정할 번호 (예: 1,4 · 빼기 x1 · 토스쇼핑 주소 그대로 붙여넣기 https://toss.shopping/t/2398866849 · 그냥 엔터 = 그대로)"
   if (-not $cmd -or -not $cmd.Trim()) { continue }
+  # 토스쇼핑 주소(toss.shopping/t/번호)나 #번호는 상품 그룹 번호 → 't번호'로 저장 (옵션 번호와 구분)
+  $cmd = [regex]::Replace($cmd, 'https?://\S*?/t/(\d+)\S*', '#$1')
   $newIds = New-Object System.Collections.ArrayList
   foreach ($p in $cur) { [void]$newIds.Add([string]$p) }
   $removed = @()
   foreach ($t in ($cmd -split '[,\s]+' | Where-Object { $_ })) {
     if ($t -match '^[xX](\d+)$') { $ix = [int]$Matches[1] - 1; if ($ix -ge 0 -and $ix -lt $cur.Count) { $removed += [string]$cur[$ix] } }
-    elseif ($t -match '^#(\d+)$') { if (-not ($newIds -contains $Matches[1])) { [void]$newIds.Add($Matches[1]) } }
+    elseif ($t -match '^#(\d+)$') { $gid = "t$($Matches[1])"; if (-not ($newIds -contains $gid)) { [void]$newIds.Add($gid) } }
     elseif ($t -match '^\d+$') {
       $ix = [int]$t - 1
       if ($ix -ge 0 -and $ix -lt $list.Count) { $id = [string]$list[$ix].tacaItemId; if (-not ($newIds -contains $id)) { [void]$newIds.Add($id) } }
