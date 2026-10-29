@@ -746,7 +746,8 @@ h2 {
 .bcKinds button span { font-size: 22px; line-height: 1; }
 
 /* 김장 재료 한 번에 장보기 (10/29): 계산기 줄마다 [이름 ▲▼] [가격] [담기] */
-.kjCartOpen { margin-top: 12px; }
+.kjCartOpen { margin-top: 12px; height: 56px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 18px; font-weight: 800; }
+.kjCartIcon { width: 26px; height: 26px; color: #fff; flex: none; }
 .kjLeft { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
 .kjLeft .nm { flex: 1; min-width: 0; }
 .kjRow .pr { flex: none; width: 90px; }

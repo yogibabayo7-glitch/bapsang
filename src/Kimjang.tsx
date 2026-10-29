@@ -311,15 +311,6 @@ export function KimjangCard({
     <section className="card kimjang">
       <div className="listHead">
         <h2>🥬 올해 김장 비용</h2>
-        <button
-          className="kjDetailBtn"
-          onClick={() => {
-            setOpen(true);
-            track('kimjang_opened', { heads });
-          }}
-        >
-          재료별 보기 ›
-        </button>
       </div>
       <div className="kjHeadRow">
         <span>배추 몇 포기?</span>
@@ -365,7 +356,7 @@ export function KimjangCard({
       <Diff c={r.week} label="지난주" />
       <p className="kjNote">
         {regionName} {allKr ? '국산 ' : ''}시세로 계산한 재료 {r.lines.length - r.skipped}가지 값이에요
-        {heads === 20 ? ' (4인 가족 기준)' : ''}. 집에 있는 재료는 ‘재료별 보기’에서 뺄 수 있어요.
+        {heads === 20 ? ' (4인 가족 기준)' : ''}. 재료 양 조절·집에 있는 재료 빼기·담기는 아래 ‘재료 고르고 담기’에서 할 수 있어요.
       </p>
       {shop && (
         <button
@@ -373,10 +364,14 @@ export function KimjangCard({
           onClick={() => {
             setOpen(true);
             track('kimjang_opened', { heads, from: 'cart_button' });
-            setTimeout(() => document.querySelector('.kjList')?.scrollIntoView({ behavior: 'smooth' }), 150);
           }}
         >
-          🛒 김장 재료 한 번에 장보기
+          <svg className="kjCartIcon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 4h2.2l2.1 10.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.1L20.5 8H6.3" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="9.5" cy="19.5" r="1.7" fill="currentColor" />
+            <circle cx="17" cy="19.5" r="1.7" fill="currentColor" />
+          </svg>
+          재료 고르고 담기
         </button>
       )}
       <ShopStrip shop={shop} items={kimjangShop.slice(0, 10)} title="🛒 필요한 김장 재료 토스쇼핑에서 보기" from="kimjang" />
