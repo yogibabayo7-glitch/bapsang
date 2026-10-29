@@ -178,7 +178,6 @@ export type TrackEvent =
   | 'kimjang_item_toggled' // 집에 있는 재료 빼기/넣기
   | 'kimjang_amount_changed' // 재료 양 ▲▼
   | 'kimjang_amount_reset' // 재료 양 기본으로
-  | 'kimjang_cart_alt' // 한 번에 장보기: 다른 상품 보기
   | 'cabbage_opened' // 배추 종류별 보기 열기
   | 'cabbage_kind_selected' // 배추 산지·종류 칩 누름
   | 'banchan_opened' // 반찬 카드에서 종류·전체 보기 누름

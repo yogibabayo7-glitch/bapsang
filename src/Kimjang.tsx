@@ -1,11 +1,9 @@
 // 김장 물가 계산기: 배추 N포기 김장에 드는 재료값을 오늘 시세로 계산해요
 import { useEffect, useState } from 'react';
-import { Q, type PriceBook, type Shop } from './data/types';
-import { getItem, setItem, shareText, track } from './platform';
+import { Q, type PriceBook, type Shop, type ShopItem } from './data/types';
+import { getItem, openLink, setItem, shareText, track } from './platform';
 import { CabbageSheet, useCabbage } from './Cabbage';
 import { ShopStrip, domesticOnly, productsFor } from './Shop';
-import type { ShopItem } from './data/types';
-import { openLink } from './platform';
 
 // 김장 재료 → shop.json 김장 묶음(kimjang)의 카테고리 이름. 김장 묶음 상품을 먼저, 없으면 그 품목 상품
 const KJ_CAT: Record<string, string> = {
@@ -21,7 +19,7 @@ const KJ_CAT: Record<string, string> = {
   'fish-sauce': '멸치액젓',
   'sea-salt': '천일염',
 };
-const CART_KEY = 'jb.kimjang.cart'; // 장보기 목록: {d: 날짜, opened: [재료id], alt: {재료id: 몇 번째 상품}}
+const CART_KEY = 'jb.kimjang.cart'; // 장보기: {d: 날짜, opened: [담으러 간 재료id]}
 
 function optionsFor(shop: Shop | null, id: string): ShopItem[] {
   if (!shop) return [];
@@ -34,93 +32,60 @@ function optionsFor(shop: Shop | null, id: string): ShopItem[] {
 }
 
 // 고른 재료 한 번에 장보기 — 토스쇼핑 링크는 상품 하나씩만 열 수 있어서(장바구니 자동 담기 기능 없음),
-// 재료마다 상품 하나를 보여주고 차례대로 열어 장바구니에 담게 도와줘요. 연 재료는 ✓ 표시(오늘 하루 기억).
-function KimjangCart({ shop, lines }: { shop: Shop | null; lines: Line[] }) {
+// 계산기 줄마다 가격 옆 '담기' 버튼으로 그 재료 상품을 열어요. 연 재료는 ✓ 표시(오늘 하루 기억).
+function useKimjangCart(shop: Shop | null) {
   const today = new Date().toISOString().slice(0, 10);
   const [opened, setOpened] = useState<Set<string>>(new Set());
-  const [alt, setAlt] = useState<Record<string, number>>({});
   useEffect(() => {
     getItem(CART_KEY).then((v) => {
       try {
         const o = v ? JSON.parse(v) : null;
-        if (o?.d === today) {
-          setOpened(new Set(o.opened ?? []));
-          setAlt(o.alt ?? {});
-        }
+        if (o?.d === today) setOpened(new Set(o.opened ?? []));
       } catch {}
     });
   }, [today]);
-  const save = (op: Set<string>, al: Record<string, number>) =>
-    void setItem(CART_KEY, JSON.stringify({ d: today, opened: [...op], alt: al }));
-  if (!shop) return null;
-  const rows = lines
-    .filter((l) => !l.skipped)
-    .map((l) => ({ l, opts: optionsFor(shop, l.id) }))
-    .filter((x) => x.opts.length > 0);
-  if (rows.length < 2) return null;
-  const done = rows.filter((x) => opened.has(x.l.id)).length;
-  const go = (id: string, p: ShopItem) => {
+  const productOf = (id: string): ShopItem | undefined => optionsFor(shop, id)[0];
+  const go = (id: string) => {
+    const p = productOf(id);
+    if (!p) return;
     const op = new Set(opened).add(id);
     setOpened(op);
-    save(op, alt);
+    void setItem(CART_KEY, JSON.stringify({ d: today, opened: [...op] }));
     track('shop_clicked', { from: 'kimjang_cart', item: p.id, ingredient: id });
     void openLink(p.url);
   };
-  const next = (id: string, n: number) => {
-    const al = { ...alt, [id]: ((alt[id] ?? 0) + 1) % n };
-    setAlt(al);
-    save(opened, al);
-    track('kimjang_cart_alt', { item: id });
-  };
-  const firstLeft = rows.find((x) => !opened.has(x.l.id));
+  return { opened, productOf, go };
+}
+
+// 계산기 아래 요약: 진행 막대 + 다음 재료 담기 + 대가성 문구
+function KimjangCartSummary({
+  shop,
+  lines,
+  cart,
+}: {
+  shop: Shop | null;
+  lines: Line[];
+  cart: ReturnType<typeof useKimjangCart>;
+}) {
+  if (!shop) return null;
+  const rows = lines.filter((l) => !l.skipped && cart.productOf(l.id));
+  if (rows.length < 2) return null;
+  const done = rows.filter((l) => cart.opened.has(l.id)).length;
+  const left = rows.find((l) => !cart.opened.has(l.id));
   return (
     <div className="kjCart">
-      <h3>🛒 고른 재료 토스쇼핑에서 한 번에 장보기</h3>
       <p className="hint">
-        재료를 차례로 눌러 장바구니에 담고, 마지막에 토스쇼핑 장바구니에서 한 번에 결제하세요. 필요한 양을 보고
-        수량을 골라 주세요.
+        🛒 재료마다 가격 옆 <b>담기</b>를 눌러 토스쇼핑 장바구니에 담고, 마지막에 장바구니에서 한 번에 결제하세요.
       </p>
       <div className="kjCartBar">
         <span style={{ width: `${(done / rows.length) * 100}%` }} />
       </div>
       <p className="kjCartCount">
-        {done === rows.length ? '모든 재료를 열어 봤어요 👍' : `${rows.length}가지 중 ${done}가지 담으러 다녀왔어요`}
+        {done === rows.length ? '모든 재료를 담으러 다녀왔어요 👍' : `${rows.length}가지 중 ${done}가지 담으러 다녀왔어요`}
       </p>
-      <ul className="kjCartList">
-        {rows.map(({ l, opts }) => {
-          const p = opts[(alt[l.id] ?? 0) % opts.length];
-          const on = opened.has(l.id);
-          return (
-            <li key={l.id} className={on ? 'on' : ''}>
-              <button className="kjCartItem" onClick={() => go(l.id, p)}>
-                <span className="thumb">
-                  <img src={p.thumb} alt="" loading="lazy" referrerPolicy="no-referrer" />
-                </span>
-                <span className="kjCartTxt">
-                  <b>
-                    {on ? '✓ ' : ''}
-                    {l.name} <small>필요 {l.label}</small>
-                  </b>
-                  <span className="pn">{p.name}</span>
-                </span>
-                <span className="go">{on ? '다시 보기' : '담으러 가기'} ›</span>
-              </button>
-              {opts.length > 1 && (
-                <button className="link kjCartAlt" onClick={() => next(l.id, opts.length)}>
-                  다른 상품 ({((alt[l.id] ?? 0) % opts.length) + 1}/{opts.length})
-                </button>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-      {firstLeft && (
-        <button
-          className="btn full"
-          style={{ marginTop: 10 }}
-          onClick={() => go(firstLeft.l.id, firstLeft.opts[(alt[firstLeft.l.id] ?? 0) % firstLeft.opts.length])}
-        >
-          다음 재료 담으러 가기: {firstLeft.l.name} ›
+      {left && (
+        <button className="btn full" style={{ marginTop: 4 }} onClick={() => cart.go(left.id)}>
+          다음 재료 담으러 가기: {left.name} ›
         </button>
       )}
       <p className="disclosure">
@@ -280,6 +245,7 @@ export function KimjangCard({
   const [open, setOpen] = useState(false);
   const [cabbageOpen, setCabbageOpen] = useState(false);
   const cabbage = useCabbage(shop);
+  const cart = useKimjangCart(shop);
   useEffect(() => {
     getItem(KEY).then((v) => {
       const n = Number(v);
@@ -407,7 +373,7 @@ export function KimjangCard({
           onClick={() => {
             setOpen(true);
             track('kimjang_opened', { heads, from: 'cart_button' });
-            setTimeout(() => document.querySelector('.kjCart')?.scrollIntoView({ behavior: 'smooth' }), 150);
+            setTimeout(() => document.querySelector('.kjList')?.scrollIntoView({ behavior: 'smooth' }), 150);
           }}
         >
           🛒 김장 재료 한 번에 장보기
@@ -453,6 +419,7 @@ export function KimjangCard({
                   }}
                 >
                   <span className="kjBox" aria-hidden="true" />
+                  <span className="kjLeft">
                   <span className="nm">
                     <b>{l.name}</b>
                     <small>
@@ -479,6 +446,7 @@ export function KimjangCard({
                       ▼
                     </button>
                   </span>
+                  </span>
                   <span className="pr">
                     <b>{won(l.now)}</b>
                     {l.y1 != null && !l.skipped && (
@@ -487,6 +455,22 @@ export function KimjangCard({
                       </small>
                     )}
                   </span>
+                  {shop &&
+                    (!l.skipped && cart.productOf(l.id) ? (
+                      <button
+                        className={`kjBuy${cart.opened.has(l.id) ? ' on' : ''}`}
+                        aria-label={`${l.name} 토스쇼핑에서 담기`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cart.go(l.id);
+                        }}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        {cart.opened.has(l.id) ? '✓ 담음' : '담기'}
+                      </button>
+                    ) : (
+                      <span className="kjBuy empty" aria-hidden="true" />
+                    ))}
                 </li>
               ))}
             </ul>
@@ -507,7 +491,7 @@ export function KimjangCard({
             </div>
             <p className="hint">배추 1포기당 약 {won(r.perHead)}</p>
             {r.missing > 0 && <p className="hint">오늘 조사되지 않은 재료 {r.missing}가지는 빠져 있어요.</p>}
-            <KimjangCart shop={shop} lines={r.lines} />
+            <KimjangCartSummary shop={shop} lines={r.lines} cart={cart} />
             <button
               className="btn full"
               style={{ marginTop: 12 }}
