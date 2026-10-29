@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Shop, ShopItem } from './data/types';
 import { openLink, track } from './platform';
+import { useBackLayer } from './back';
 
 const EMOJI: Record<string, string> = {
   볶음: '🍳',
@@ -48,6 +49,7 @@ function Item({ p, from, kind }: { p: ShopItem; from: string; kind?: string }) {
 
 export function BanchanCard({ shop }: { shop: Shop | null }) {
   const [open, setOpen] = useState<string | null>(null);
+  useBackLayer(!!open, () => setOpen(null));
   const b = banchanOf(shop);
   if (!shop || !b) return null;
   const show = (k: string) => {

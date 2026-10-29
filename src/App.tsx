@@ -6,6 +6,7 @@ import { KimjangCard, isKimjangSeason } from './Kimjang';
 import { BanchanCard } from './Banchan';
 import { ShopStrip, productsFor } from './Shop';
 import { ICONS, ICON_OF } from './icons';
+import { initBackHandler, useBackLayer } from './back';
 import { BANNER_AD_ID, REWARD_AD_ID, attachBanner, getItem, maybeShowInterstitial, preloadAds, setItem, shareText, showRewarded, track } from './platform';
 
 type Compare = 'day' | 'week';
@@ -98,6 +99,16 @@ export default function App() {
   const [basketOpen, setBasketOpen] = useState(false);
   const [shop, setShop] = useState<Shop | null>(null);
   const month = new Date().getMonth() + 1;
+
+  // 뒤로가기: 나중에 연 것부터 닫기 (검색 → 상세를 열었으면 상세 먼저, 그다음 검색 지우기)
+  useEffect(() => initBackHandler(), []);
+  useBackLayer(!!query, () => setQuery(''));
+  useBackLayer(regionOpen, () => setRegionOpen(false));
+  useBackLayer(basketOpen, () => setBasketOpen(false));
+  useBackLayer(!!detail, () => {
+    setDetail(null);
+    maybeShowInterstitial();
+  });
 
   useEffect(() => {
     (async () => {

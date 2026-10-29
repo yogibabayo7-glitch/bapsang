@@ -4,6 +4,7 @@ import { Q, type PriceBook, type Shop, type ShopItem } from './data/types';
 import { getItem, openLink, setItem, shareText, track } from './platform';
 import { CabbageSheet, useCabbage } from './Cabbage';
 import { ShopStrip, domesticOnly, productsFor } from './Shop';
+import { useBackLayer } from './back';
 
 // 김장 재료 → shop.json 김장 묶음(kimjang)의 카테고리 이름. 김장 묶음 상품을 먼저, 없으면 그 품목 상품
 const KJ_CAT: Record<string, string> = {
@@ -244,6 +245,8 @@ export function KimjangCard({
   const [adj, setAdj] = useState<Record<string, number>>({});
   const [open, setOpen] = useState(false);
   const [cabbageOpen, setCabbageOpen] = useState(false);
+  useBackLayer(open, () => setOpen(false));
+  useBackLayer(cabbageOpen, () => setCabbageOpen(false));
   const cabbage = useCabbage(shop);
   const cart = useKimjangCart(shop);
   useEffect(() => {

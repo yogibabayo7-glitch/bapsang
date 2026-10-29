@@ -13,6 +13,13 @@
     - 코드: `src/platform.ts`(preloadAds·maybeShowInterstitial·showRewarded), `src/App.tsx`(RegionCompare).
 - **밥값 챌린지** `babgap-challenge` — 소스는 이 저장소에 없음(작업 컨테이너의 /home/claude/babgap-challenge, 재구성본). v1.3(토스 적금 보러 가기 버튼, 링크 https://toss.im/_m/7VUPezk2) 검토 중.
 
+## 10/29 13:50 — 뒤로가기 고침 (v0.6.0 다시 빌드)
+- 사장님 지적: 검색 → 상품 보기 → 위쪽 버튼 누르면 앱 밖으로 나감. 원인: 상세·시트·검색이 화면 상태라 토스 뒤로가기와 연결 안 됨.
+- `src/back.ts`: graniteEvent backEvent 구독(기본 뒤로가기 막힘) → 나중에 연 층부터 닫기(`useBackLayer`), 아무것도 안 열렸으면 closeView(). 층: 검색어·지역·장바구니·품목 상세(App), 김장 시트·배추 종류(Kimjang), 반찬 시트(Banchan). 미리보기 점검용 window.__back().
+- 미리보기 확인: 배추 검색 → 상세 → 뒤로(상세 닫힘, 검색 유지) → 뒤로(검색 지워짐). 김장 시트 뒤로 닫힘.
+- ⚠ 토스 위쪽 ✕는 '미니앱 닫기' 버튼이라 앱에서 못 바꿈(문서상 backEvent만 가로챌 수 있음). 사장님께 ‹ 버튼 쓰도록 안내.
+- 실제 토스 앱에서 ‹·안드로이드 뒤로가기 동작은 출시본으로 확인 필요.
+
 ## 10/29 13:37 — 시세 없는 품목도 찾기 + 가나다순 (v0.6.0 다시 빌드)
 - 사장님 지적: 검색창에 '체리' 쳐도 안 나옴. 원인: 10/28 KAMIS에 참외·딸기·복숭아·체리 가격이 없어 latest.json에서 빠짐 → 목록·검색에서 사라지고, 고정한 체리·참외 쇼핑 상품도 볼 곳이 없었음.
 - `src/App.tsx`: CATALOG 중 오늘 시세 없는 품목(`noPrice`)을 검색하면 '오늘 시세 없음' 카드 + 토스쇼핑 상품(ShopStrip, 이벤트 shop_clicked from=no_price). 검색 안 할 땐 목록 아래 '오늘 시세가 없는 품목: 참외 · 딸기 …' 링크(누르면 그 이름으로 검색). 분류 필터(과일 등)·제철 필터 따름.
