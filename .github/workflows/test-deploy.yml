@@ -1,0 +1,52 @@
+# 토스 콘솔에 테스트용으로 올리기 (검토 요청은 안 해요)
+# 빌드 → 콘솔 업로드 → 테스트 링크(intoss-private://…)를 실행 요약에 남겨요.
+# 휴대폰 토스 앱에서 링크(QR)로 열어 확인한 뒤, 괜찮으면 사장님이 콘솔에서 검토 요청만 눌러요.
+# 필요: 저장소 Settings → Secrets and variables → Actions → AIT_API_KEY (콘솔 → 연동 → 콘솔 API 키)
+name: 토스 테스트 업로드
+on:
+  workflow_dispatch:
+    inputs:
+      memo:
+        description: '업데이트 메모 (비우면 커밋 제목)'
+        required: false
+  push:
+    branches: [test-deploy]
+permissions:
+  contents: read
+concurrency:
+  group: test-deploy
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 빌드
+        env:
+          VITE_DATA_BASE: https://yogibabayo7-glitch.github.io/bapsang/data
+          VITE_BANNER_AD_ID: ait.v2.live.da2a8d659a024c90
+          VITE_INTERSTITIAL_AD_ID: ''
+          VITE_REWARD_AD_ID: ''
+        run: |
+          npm run build
+          grep -q "ait.v2.live.da2a8d659a024c90" dist/assets/*.js || { echo "배너 ID가 빌드에 안 들어갔어요"; exit 1; }
+          ls -la *.ait
+      - name: 콘솔에 올리기
+        env:
+          AIT_API_KEY: ${{ secrets.AIT_API_KEY }}
+          MEMO: ${{ github.event.inputs.memo || github.event.head_commit.message }}
+        run: |
+          if [ -z "$AIT_API_KEY" ]; then echo "AIT_API_KEY 비밀 값이 없어요"; exit 1; fi
+          VER=$(node -p "require('./package.json').version")
+          npx ait deploy --api-key "$AIT_API_KEY" --location bapsang-price.ait -m "v$VER 테스트 · ${MEMO:0:200}" 2>&1 | tee deploy.log
+          SCHEME=$(grep -oE "intoss-private://[^[:space:]]+" deploy.log | head -1)
+          echo "버전: v$VER" >> "$GITHUB_STEP_SUMMARY"
+          echo "테스트 링크: $SCHEME" >> "$GITHUB_STEP_SUMMARY"
+          echo "TEST_SCHEME=$SCHEME"
+          [ -n "$SCHEME" ] || { echo "테스트 링크를 못 찾았어요 (위 로그 확인)"; exit 1; }
