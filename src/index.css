@@ -777,3 +777,4 @@ h2 {
 .kjGuide p { margin: 0; font-size: 14px; line-height: 1.55; color: #333d4b; }
 .kjGuide p b { color: #1b64da; }
 .kjSheetNote { margin: 14px 0 0; font-size: 12px; }
+.kjGuide p + p { margin-top: 6px; }
