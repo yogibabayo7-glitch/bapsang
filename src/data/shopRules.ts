@@ -45,7 +45,8 @@ export const SHOP_RULES: Record<string, ShopRule> = {
     not: '말랭이|단무지|무청|알타리|열무|총각|무생채|깍두기|무말랭이|' + PROC,
     kr: true,
   },
-  'young-radish': { cats: ['뿌리채소 > 열무'], must: '열무', not: '김치|물김치|비빔|국수|' + PROC },
+  // 10/29 사장님이 토스쇼핑에서 직접 찾은 열무 3개 고정 (인기 목록엔 열무가 없어서)
+  'young-radish': { cats: ['뿌리채소 > 열무'], must: '열무', not: '김치|물김치|비빔|국수|' + PROC, pin: ['1398956427', '2666327311', '1511486257'] },
   'cabbage-head': { cats: ['쌈채소/샐러드채소 > 양배추'], must: '양배추', not: '환|피클|샐러드|김치|라페|칩|' + PROC },
   spinach: { cats: ['나물/잎줄기채소 > 시금치'], must: '시금치', not: '무침|나물|파스타|냉동|' + PROC },
   lettuce: { cats: ['쌈채소/샐러드채소 > 상추'], must: '상추', not: '궁채|줄기상추|양상추|로메인|유러피안|랜덤|모듬|믹스|모음|세트|샐러드|화분|키트|' + PROC },
