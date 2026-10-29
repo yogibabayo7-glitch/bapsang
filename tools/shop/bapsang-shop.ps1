@@ -382,15 +382,6 @@ if ($rules -and $rules.items) {
     $bases = @{}
     $used = @{}
     $leaf = ([string]@($r.cats)[0]).Split('>')[-1].Trim()
-    foreach ($p in @($pinMap[$iid])) {
-      if (-not $p -or -not $pinDet.ContainsKey($p) -or $pinDet[$p] -is [string]) { continue }
-      $it = $pinDet[$p]
-      if ($it.isSoldOut -or -not $it.thumbnailUrl -or $used.ContainsKey($p)) { continue }
-      $used[$p] = $true; $used[[string]$it.tacaItemId] = $true; $bases[(Base-Name ([string]$it.displayName))] = $true
-      [void]$chosen.Add([pscustomobject]@{ it = $it; cat = $leaf; pin = $true })
-      if ($chosen.Count -ge $max) { break }
-    }
-    $pinned = $chosen.Count
     # 1차: 이름이 겹치지 않는 상품을 카테고리마다 번갈아 (밤고구마→호박고구마→꿀고구마→…)
     # 2차: 자리가 남으면 용량만 다른 상품으로 채워요
     $more = $true
@@ -405,6 +396,18 @@ if ($rules -and $rules.items) {
         [void]$chosen.Add($x)
         if ($chosen.Count -ge $max) { break }
       }
+    }
+    # 고정 상품 (10/29 사장님: 인기 상품을 먼저, 고정 상품은 그 뒤에 — 인기 상품이 없거나 적은 품목을 채우는 용도)
+    #  순서: 인기 상품(종류 다른 것) → 고정 상품 → 자리가 남으면 인기 상품의 용량만 다른 것
+    $pinned = 0
+    foreach ($p in @($pinMap[$iid])) {
+      if ($chosen.Count -ge $max) { break }
+      if (-not $p -or -not $pinDet.ContainsKey($p) -or $pinDet[$p] -is [string]) { continue }
+      $it = $pinDet[$p]
+      if ($it.isSoldOut -or -not $it.thumbnailUrl -or $used.ContainsKey($p) -or $used.ContainsKey([string]$it.tacaItemId)) { continue }
+      $used[$p] = $true; $used[[string]$it.tacaItemId] = $true; $bases[(Base-Name ([string]$it.displayName))] = $true
+      [void]$chosen.Add([pscustomobject]@{ it = $it; cat = $leaf; pin = $true })
+      $pinned++
     }
     if ($chosen.Count -lt $max) {
       $rest = @($s.byCat.Values | ForEach-Object { $_ } | Where-Object { -not $used.ContainsKey([string]$_.it.tacaItemId) } | Sort-Object pref, rank)
