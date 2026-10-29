@@ -770,3 +770,10 @@ h2 {
 .noPrice .hint { margin: 6px 0 0; }
 .npList { margin-top: 12px; line-height: 1.8; }
 .npLink { background: none; border: 0; padding: 0; color: #3182f6; font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+
+/* 김장 담기 안내 (10/29) */
+.kjGuide { margin: 4px 0 10px; padding: 12px 14px; border-radius: 12px; background: #e8f3ff; }
+.kjGuide > b { display: block; font-size: 15px; margin-bottom: 4px; color: #1b64da; }
+.kjGuide p { margin: 0; font-size: 14px; line-height: 1.55; color: #333d4b; }
+.kjGuide p b { color: #1b64da; }
+.kjSheetNote { margin: 14px 0 0; font-size: 12px; }

@@ -59,6 +59,19 @@ function useKimjangCart(shop: Shop | null) {
   return { opened, productOf, go };
 }
 
+// 담기 안내 (10/29 사장님 요청: 돌아오는 방법을 모를 수 있어서 창 맨 위에 써 둠)
+function KimjangCartGuide() {
+  return (
+    <div className="kjGuide" role="note">
+      <b>📌 안내사항</b>
+      <p>
+        <b>담기</b>를 누르면 토스쇼핑으로 가요. 장바구니에 담은 뒤 <b>왼쪽 위 ‹ 뒤로가기를 2번</b> 누르면 이 창으로 다시
+        돌아와요. 담은 재료는 <b>✓ 담음</b>으로 표시돼요.
+      </p>
+    </div>
+  );
+}
+
 // 계산기 아래 요약: 진행 막대 + 다음 재료 담기 + 대가성 문구
 function KimjangCartSummary({
   shop,
@@ -411,10 +424,7 @@ export function KimjangCard({
         <div className="sheetBg" onClick={() => setOpen(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <h2>배추 {heads}포기 김장 재료</h2>
-            <p className="hint" style={{ marginBottom: 8 }}>
-              {regionName} 평균 소매가{allKr ? '(국산 품종)' : ''}로 계산했어요. 집에 있는 재료는 체크를 풀면
-              합계에서 빠져요. 집집마다 레시피가 달라서 참고용이에요.
-            </p>
+            {shop && <KimjangCartGuide />}
             <ul className="list kjList">
               {r.lines.map((l) => (
                 <li
@@ -524,6 +534,10 @@ export function KimjangCard({
             <button className="btn ghost full" style={{ marginTop: 8 }} onClick={() => setOpen(false)}>
               닫기
             </button>
+            <p className="hint kjSheetNote">
+              {regionName} 평균 소매가{allKr ? '(국산 품종)' : ''}로 계산했어요. 집에 있는 재료는 체크를 풀면
+              합계에서 빠져요. 집집마다 레시피가 달라서 참고용이에요.
+            </p>
           </div>
         </div>
       )}
