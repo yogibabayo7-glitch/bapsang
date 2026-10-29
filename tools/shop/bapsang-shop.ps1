@@ -356,6 +356,16 @@ if ($rules -and $rules.items) {
   if ($pinMap.Count) {
     $all = @($pinMap.Values | ForEach-Object { $_ })
     $pinDet = Get-Details $all
+    # 10/29: 토스쇼핑 주소(toss.shopping/t/번호)의 번호는 상품 그룹 번호(tacaId)예요 (옵션 번호 tacaItemId가 아님).
+    #  옵션 번호로 안 나온 것은 그룹 번호로 다시 조회 → 그 상품의 대표 옵션이 나와요 (링크도 그 옵션으로 발급).
+    $miss = @($all | Where-Object { -not $pinDet.ContainsKey($_) -or $pinDet[$_] -is [string] } | Select-Object -Unique)
+    for ($i = 0; $i -lt $miss.Count; $i += 30) {
+      $chunk = @($miss[$i..([Math]::Min($i + 29, $miss.Count - 1))])
+      try {
+        $res = Api 'GET' "/products/detail?tacaIds=$($chunk -join ',')" $null
+        foreach ($it in @($res.items)) { if ($it) { $pinDet[[string]$it.tacaId] = (Slim $it) } }
+      } catch { Log "고정 상품 그룹 번호 조회 실패($($chunk.Count)개): $_" }
+    }
     $gone = @($all | Where-Object { -not $pinDet.ContainsKey($_) } | Select-Object -Unique)
     $sold = @($all | Where-Object { $pinDet.ContainsKey($_) -and -not ($pinDet[$_] -is [string]) -and $pinDet[$_].isSoldOut } | Select-Object -Unique)
     Log "⑥ 고정 상품 $($all.Count)개 확인 (품절 $($sold.Count)개, 판매 끝 $($gone.Count)개는 오늘 빼요)"
@@ -376,7 +386,7 @@ if ($rules -and $rules.items) {
       if (-not $p -or -not $pinDet.ContainsKey($p) -or $pinDet[$p] -is [string]) { continue }
       $it = $pinDet[$p]
       if ($it.isSoldOut -or -not $it.thumbnailUrl -or $used.ContainsKey($p)) { continue }
-      $used[$p] = $true; $bases[(Base-Name ([string]$it.displayName))] = $true
+      $used[$p] = $true; $used[[string]$it.tacaItemId] = $true; $bases[(Base-Name ([string]$it.displayName))] = $true
       [void]$chosen.Add([pscustomobject]@{ it = $it; cat = $leaf; pin = $true })
       if ($chosen.Count -ge $max) { break }
     }
