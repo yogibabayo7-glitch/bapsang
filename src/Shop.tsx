@@ -2,7 +2,7 @@
 import { DOMESTIC_RE, IMPORTED_RE } from './data/catalog';
 import { SHOP_IMPORT_RE, SHOP_RULES } from './data/shopRules';
 import type { Shop, ShopItem } from './data/types';
-import { openLink, track } from './platform';
+import { openLink, saveResume, track, type Resume } from './platform';
 
 // 이 품목 상품이 맞나? — 그 품목 토스쇼핑 카테고리 상품이면서 이름 규칙(must/not/kr)을 통과해야 해요
 export function matchesItem(id: string, p: ShopItem): boolean {
@@ -71,17 +71,20 @@ export function ShopStrip({
   title,
   from,
   showFresh = false,
+  resume,
 }: {
   shop: Shop | null;
   items: ShopItem[];
   title: string;
   from: string;
   showFresh?: boolean;
+  resume?: Resume;
 }) {
   const fresh = showFresh ? shop?.pages?.fresh : undefined;
   if (!shop || (!items.length && !fresh)) return null;
   const open = (p: ShopItem) => {
     track('shop_clicked', { from, item: p.id });
+    if (resume) saveResume(resume);
     void openLink(p.url);
   };
   return (

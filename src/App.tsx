@@ -7,7 +7,7 @@ import { BanchanCard } from './Banchan';
 import { ShopStrip, productsFor } from './Shop';
 import { ICONS, ICON_OF } from './icons';
 import { initBackHandler, useBackLayer } from './back';
-import { BANNER_AD_ID, REWARD_AD_ID, attachBanner, getItem, maybeShowInterstitial, preloadAds, setItem, shareText, showRewarded, track } from './platform';
+import { BANNER_AD_ID, REWARD_AD_ID, attachBanner, getItem, maybeShowInterstitial, preloadAds, setItem, shareText, showRewarded, track, takeResume } from './platform';
 
 type Compare = 'day' | 'week';
 type Sort = 'basic' | 'name' | 'down' | 'up';
@@ -130,6 +130,13 @@ export default function App() {
       setBook(b);
       track('price_viewed', { region: r || 'all' });
       loadShop().then(setShop);
+      // 토스쇼핑 다녀와서 다시 열면 보던 품목 상세를 다시 열어요
+      takeResume().then((rs) => {
+        if (rs?.k === 'detail' && b.items.some((it) => it.id === rs.id)) {
+          setDetail(rs.id);
+          track('resume_opened', { to: 'detail' });
+        }
+      });
       preloadAds();
     })();
   }, []);
@@ -761,7 +768,7 @@ function Detail({
               : '💡 최근 평균 수준이에요.'}
         </p>
         <RegionCompare book={book} row={row} region={region} />
-        <ShopStrip shop={shop} items={productsFor(shop, row.id)} title={`🛍️ 토스쇼핑에서 ${row.name} 보기`} from="detail" />
+        <ShopStrip shop={shop} items={productsFor(shop, row.id)} title={`🛍️ 토스쇼핑에서 ${row.name} 보기`} from="detail" resume={{ k: 'detail', id: row.id }} />
         <Banner />
         <button className="btn full" onClick={onClose}>
           닫기

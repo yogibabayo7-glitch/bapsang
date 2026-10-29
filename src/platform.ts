@@ -167,6 +167,7 @@ export async function shareText(message: string): Promise<boolean> {
 
 // 콘솔 '이벤트' → '핵심 지표'에 쓰는 기록
 export type TrackEvent =
+  | 'resume_opened' // 토스쇼핑 다녀와 앱을 다시 열었을 때 보던 화면 다시 열기 (to=kimjang·detail·banchan·cabbage)
   | 'price_viewed' // 오늘 시세 화면을 끝까지 본 순간 (첫 화면 로드)
   | 'item_detail_viewed' // 품목 상세(그래프) 열람 → 대표 전환 후보
   | 'favorite_added' // 자주 찾는 품목 추가
@@ -204,3 +205,36 @@ export async function openLink(url: string): Promise<void> {
     window.open(url, '_blank');
   } catch {}
 }
+
+// ── 토스쇼핑 다녀온 뒤 이어 보기 (10/29) ──
+// 토스쇼핑 링크로 나가면 토스 쪽 문제로 미니앱이 닫힐 때가 있어요(개발자 커뮤니티 문의 중, 토스 수정 날짜 미정).
+// 나가기 직전 화면을 저장해 두고, 앱을 다시 열면(30분 안) 그 화면을 다시 열어요.
+export type Resume = { k: 'kimjang'; ing?: string } | { k: 'detail'; id: string } | { k: 'banchan'; kind: string } | { k: 'cabbage' };
+const RESUME_KEY = 'jb.resume';
+const RESUME_MS = 30 * 60 * 1000;
+export function saveResume(r: Resume) {
+  void setItem(RESUME_KEY, JSON.stringify({ ...r, t: Date.now() }));
+}
+export function clearResume() {
+  void setItem(RESUME_KEY, '');
+}
+// 앱을 새로 열 때 한 번만 읽어요 (읽으면 지워요)
+let resumeOnce: Promise<Resume | null> | null = null;
+export function takeResume(): Promise<Resume | null> {
+  if (!resumeOnce)
+    resumeOnce = getItem(RESUME_KEY).then((v) => {
+      clearResume();
+      try {
+        const o = v ? JSON.parse(v) : null;
+        if (o && typeof o.t === 'number' && Date.now() - o.t < RESUME_MS) return o as Resume;
+      } catch {}
+      return null;
+    });
+  return resumeOnce;
+}
+// 앱이 안 닫히고 살아서 돌아온 경우엔 화면이 그대로라 저장한 걸 지워요 (나중에 엉뚱하게 열리지 않게)
+try {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') clearResume();
+  });
+} catch {}

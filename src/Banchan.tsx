@@ -1,8 +1,8 @@
 // 반찬 모아 보기: 토스쇼핑 반찬 카테고리(볶음·조림·무침·장아찌·반찬세트·김치·젓갈·게장) 인기 상품을 종류별로 골라 봐요.
 // 상품은 사장님 PC가 매일 받아 둔 shop.json의 banchan에서 와요. 없으면 카드가 안 보여요.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Shop, ShopItem } from './data/types';
-import { openLink, track } from './platform';
+import { openLink, saveResume, takeResume, track } from './platform';
 import { useBackLayer } from './back';
 
 const EMOJI: Record<string, string> = {
@@ -35,6 +35,7 @@ function Item({ p, from, kind }: { p: ShopItem; from: string; kind?: string }) {
       className="shopItem"
       onClick={() => {
         track('shop_clicked', { from, item: p.id, kind: kind ?? p.cat ?? '' });
+        if (kind) saveResume({ k: 'banchan', kind });
         void openLink(p.url);
       }}
     >
@@ -50,6 +51,14 @@ function Item({ p, from, kind }: { p: ShopItem; from: string; kind?: string }) {
 export function BanchanCard({ shop }: { shop: Shop | null }) {
   const [open, setOpen] = useState<string | null>(null);
   useBackLayer(!!open, () => setOpen(null));
+  useEffect(() => {
+    takeResume().then((r) => {
+      if (r?.k === 'banchan') {
+        setOpen(r.kind);
+        track('resume_opened', { to: 'banchan' });
+      }
+    });
+  }, []);
   const b = banchanOf(shop);
   if (!shop || !b) return null;
   const show = (k: string) => {

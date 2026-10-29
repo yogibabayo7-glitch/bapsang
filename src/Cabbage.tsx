@@ -2,7 +2,7 @@
 // 쉐어링크 API에는 키워드 검색이 없어서, 매일 받아 둔 상품 목록(shop.json) 안에서 이름으로 나눠요.
 import { useState } from 'react';
 import type { Shop, ShopItem } from './data/types';
-import { openLink, track } from './platform';
+import { openLink, saveResume, track } from './platform';
 import { CABBAGE_KINDS, cabbageItems } from './Shop';
 
 export function useCabbage(shop: Shop | null) {
@@ -23,6 +23,7 @@ export function CabbageSheet({ shop, onClose }: { shop: Shop; onClose: () => voi
   };
   const open = (p: ShopItem) => {
     track('shop_clicked', { from: 'cabbage', item: p.id, kind: sel });
+    saveResume({ k: 'cabbage' });
     void openLink(p.url);
   };
 

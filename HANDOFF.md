@@ -13,6 +13,12 @@
     - 코드: `src/platform.ts`(preloadAds·maybeShowInterstitial·showRewarded), `src/App.tsx`(RegionCompare).
 - **밥값 챌린지** `babgap-challenge` — 소스는 이 저장소에 없음(작업 컨테이너의 /home/claude/babgap-challenge, 재구성본). v1.3(토스 적금 보러 가기 버튼, 링크 https://toss.im/_m/7VUPezk2) 검토 중.
 
+## 10/29 14:20 — 토스쇼핑 다녀온 뒤 이어 보기 (v0.6.0 테스트 2차)
+- 사장님 요청: 재료 담기로 토스쇼핑 갔다가 뒤로 두 번 누르면 '재료 고르고 담기' 창으로 돌아오게. → 토스 플랫폼 문제(개발자 커뮤니티 topic 4525·4625: 토스쇼핑 쉐어링크 열고 뒤로가기 하면 미니앱 복귀 안 되고 토스 종료, 토스가 안드로이드부터 고치다 9/28 다시 끔, 10/8 기준 일정 미정, 8/5엔 '고칠 때까지 쉐어링크 빼 달라'는 답도 있었음). 다른 서비스로 이동하는 SDK/API 없음 → 우리 쪽에서 뒤로가기 복귀는 못 고침.
+- 대신 `platform.ts` saveResume/takeResume(30분, 한 번 읽으면 지움, 앱이 살아 돌아오면 visibilitychange로 지움): 나가기 직전 화면을 저장 → 앱 다시 열면 김장 시트(방금 담은 재료 줄로 스크롤, data-ing)·품목 상세·반찬 시트(종류)·배추 시트 다시 열기. 이벤트 resume_opened(to=…).
+- 미리보기 확인: 생강 담기 → 새로 열기 → 김장 시트 + 생강 줄 ✓담음 보임 / 피망 상세 상품 → 새로 열기 → 피망 상세. 두 번째 열기엔 안 열림.
+- 할 일: 토스 채널톡(앱인토스 개발자 커뮤니티)에 같은 문제 +1 문의. 토스쇼핑 링크 사용에 대해 토스가 '빼 달라'고 한 적이 있으니 사장님이 받은 '허용' 답변과 함께 확인해 두기.
+
 ## 10/29 14:00 — 테스트 업로드 자동화 (검토 요청 없이 토스 앱에서 먼저 확인)
 - `.github/workflows/test-deploy.yml` '토스 테스트 업로드': 빌드(배너 ID 포함 확인) → `npx ait deploy` → 테스트 링크를 실행 주석(notice)으로 남김. 검토 요청은 안 함 = 사장님이 휴대폰으로 최종 확인 후 콘솔에서 직접 검토 요청.
 - 실행: `gh api -X POST repos/yogibabayo7-glitch/bapsang/actions/workflows/test-deploy.yml/dispatches -f ref=main -f 'inputs[memo]=…'` (gh workflow run은 GraphQL 막혀서 안 됨). 링크 읽기: runs → jobs[0].id → `check-runs/{id}/annotations` (실행 로그는 여기서 못 받음). 링크로 QR 이미지 만들어 사장님께 전달.

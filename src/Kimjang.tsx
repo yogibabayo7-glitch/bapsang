@@ -1,7 +1,7 @@
 // 김장 물가 계산기: 배추 N포기 김장에 드는 재료값을 오늘 시세로 계산해요
 import { useEffect, useState } from 'react';
 import { Q, type PriceBook, type Shop, type ShopItem } from './data/types';
-import { getItem, openLink, setItem, shareText, track } from './platform';
+import { getItem, openLink, saveResume, setItem, shareText, takeResume, track } from './platform';
 import { CabbageSheet, useCabbage } from './Cabbage';
 import { ShopStrip, domesticOnly, productsFor } from './Shop';
 import { useBackLayer } from './back';
@@ -53,6 +53,7 @@ function useKimjangCart(shop: Shop | null) {
     setOpened(op);
     void setItem(CART_KEY, JSON.stringify({ d: today, opened: [...op] }));
     track('shop_clicked', { from: 'kimjang_cart', item: p.id, ingredient: id });
+    saveResume({ k: 'kimjang', ing: id });
     void openLink(p.url);
   };
   return { opened, productOf, go };
@@ -249,6 +250,20 @@ export function KimjangCard({
   useBackLayer(cabbageOpen, () => setCabbageOpen(false));
   const cabbage = useCabbage(shop);
   const cart = useKimjangCart(shop);
+  // 토스쇼핑 다녀와서 앱을 다시 열면 '재료 고르고 담기' 창을 그대로 다시 열고, 방금 담은 재료 줄로 이동
+  useEffect(() => {
+    takeResume().then((r) => {
+      if (r?.k === 'kimjang') {
+        setOpen(true);
+        track('resume_opened', { to: 'kimjang' });
+        if (r.ing)
+          setTimeout(() => document.querySelector(`[data-ing="${r.ing}"]`)?.scrollIntoView({ block: 'center' }), 350);
+      } else if (r?.k === 'cabbage') {
+        setCabbageOpen(true);
+        track('resume_opened', { to: 'cabbage' });
+      }
+    });
+  }, []);
   useEffect(() => {
     getItem(KEY).then((v) => {
       const n = Number(v);
@@ -404,6 +419,7 @@ export function KimjangCard({
               {r.lines.map((l) => (
                 <li
                   key={l.id}
+                  data-ing={l.id}
                   className={`item kjRow${l.skipped ? ' off' : ''}`}
                   role="checkbox"
                   aria-checked={!l.skipped}
