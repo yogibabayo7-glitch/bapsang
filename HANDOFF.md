@@ -25,6 +25,7 @@
 - 비밀 값 AIT_API_KEY = 콘솔 → 연동 → 콘솔 API 키 'claude-deploy'(전체 앱). 사장님이 GitHub에 직접 넣음. 대화에 한 번 노출됐으니 나중에 재발급 권장.
 - 작업 컨테이너에서는 apps-in-toss.toss.im 접속이 막혀 있어 GitHub Actions로 올림.
 - 10/29 13:59 v0.6.0 테스트 업로드 성공: intoss-private://bapsang-price?_deploymentId=01a18606-62b3-723b-b315-8ca595e57fa4&host=appsInTossHost
+- 10/29 14:20 2차(이어 보기): intoss-private://bapsang-price?_deploymentId=01a18610-8ac1-71c1-8b09-361e7a9c0162&host=appsInTossHost
 
 ## 10/29 13:50 — 뒤로가기 고침 (v0.6.0 다시 빌드)
 - 사장님 지적: 검색 → 상품 보기 → 위쪽 버튼 누르면 앱 밖으로 나감. 원인: 상세·시트·검색이 화면 상태라 토스 뒤로가기와 연결 안 됨.
