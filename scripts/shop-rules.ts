@@ -137,6 +137,17 @@ const CASES: [string, string, boolean][] = [
   ['lettuce', '무농약 적상추, 120g, 1개', true],
   ['almond', '햇 아몬드슬라이스, 500g, 1개', false],
   ['almond', '서래푸드 구운 아몬드, 1kg, 1봉', true],
+  // 10/29 아침 점검
+  ['peanut', '신선맘 미국산 구운 땅콩, 3kg, 1개', false],
+  ['peanut', '국내산 삶아먹는 햇땅콩, 1kg, 1개', true],
+  ['almond', '산과들에 인절미아몬드, 20g, 50봉, 1세트', false],
+  ['almond', '오븐에 구운 유기농 아몬드 크리스피, 60g, 1개', false],
+  ['almond', '넌패럴 등급 볶은아몬드, 500g, 2봉', true],
+  ['hairtail', '뚱띠 대서양 절단갈치, 1kg, 1개', false],
+  ['hairtail', '제주 은갈치, 대, 350g, 1개', true],
+  ['squid', '삼둥이수산 냉동 베이트 통오징어, 3kg, 10미, 1개', false],
+  ['squid', '국내산 주문진 생물 오징어, 10마리, 1.2kg, 1박스', true],
+  ['pork-shoulder', '농협안심한돈 혼합세트, 삼겹살 500g + 목살 500g + 앞다리살 500g, 1.5kg, 1박스', true],
   // 10/28 밤: 상품 없던 생선 — 찌개용·구이용 손질 생선은 넣고 완제품은 빼요
   ['pollack', '국내산 손질 동태 찌개용, 1kg', true],
   ['pollack', '얼큰 동태탕 밀키트, 800g', false],
