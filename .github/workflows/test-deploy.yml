@@ -45,7 +45,7 @@ jobs:
           if [ -z "$AIT_API_KEY" ]; then echo "AIT_API_KEY 비밀 값이 없어요"; exit 1; fi
           VER=$(node -p "require('./package.json').version")
           npx ait deploy --api-key "$AIT_API_KEY" --location bapsang-price.ait -m "v$VER 테스트 · ${MEMO:0:200}" 2>&1 | tee deploy.log
-          SCHEME=$(grep -oE "intoss-private://[^[:space:]]+" deploy.log | head -1)
+          SCHEME=$(sed "s/\x1b\[[0-9;]*m//g" deploy.log | grep -oE "intoss-private://[^[:space:]]+" | head -1)
           echo "버전: v$VER" >> "$GITHUB_STEP_SUMMARY"
           echo "테스트 링크: $SCHEME" >> "$GITHUB_STEP_SUMMARY"
           echo "TEST_SCHEME=$SCHEME"

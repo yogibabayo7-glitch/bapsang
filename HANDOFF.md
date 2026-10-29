@@ -13,6 +13,13 @@
     - 코드: `src/platform.ts`(preloadAds·maybeShowInterstitial·showRewarded), `src/App.tsx`(RegionCompare).
 - **밥값 챌린지** `babgap-challenge` — 소스는 이 저장소에 없음(작업 컨테이너의 /home/claude/babgap-challenge, 재구성본). v1.3(토스 적금 보러 가기 버튼, 링크 https://toss.im/_m/7VUPezk2) 검토 중.
 
+## 10/29 14:00 — 테스트 업로드 자동화 (검토 요청 없이 토스 앱에서 먼저 확인)
+- `.github/workflows/test-deploy.yml` '토스 테스트 업로드': 빌드(배너 ID 포함 확인) → `npx ait deploy` → 테스트 링크를 실행 주석(notice)으로 남김. 검토 요청은 안 함 = 사장님이 휴대폰으로 최종 확인 후 콘솔에서 직접 검토 요청.
+- 실행: `gh api -X POST repos/yogibabayo7-glitch/bapsang/actions/workflows/test-deploy.yml/dispatches -f ref=main -f 'inputs[memo]=…'` (gh workflow run은 GraphQL 막혀서 안 됨). 링크 읽기: runs → jobs[0].id → `check-runs/{id}/annotations` (실행 로그는 여기서 못 받음). 링크로 QR 이미지 만들어 사장님께 전달.
+- 비밀 값 AIT_API_KEY = 콘솔 → 연동 → 콘솔 API 키 'claude-deploy'(전체 앱). 사장님이 GitHub에 직접 넣음. 대화에 한 번 노출됐으니 나중에 재발급 권장.
+- 작업 컨테이너에서는 apps-in-toss.toss.im 접속이 막혀 있어 GitHub Actions로 올림.
+- 10/29 13:59 v0.6.0 테스트 업로드 성공: intoss-private://bapsang-price?_deploymentId=01a18606-62b3-723b-b315-8ca595e57fa4&host=appsInTossHost
+
 ## 10/29 13:50 — 뒤로가기 고침 (v0.6.0 다시 빌드)
 - 사장님 지적: 검색 → 상품 보기 → 위쪽 버튼 누르면 앱 밖으로 나감. 원인: 상세·시트·검색이 화면 상태라 토스 뒤로가기와 연결 안 됨.
 - `src/back.ts`: graniteEvent backEvent 구독(기본 뒤로가기 막힘) → 나중에 연 층부터 닫기(`useBackLayer`), 아무것도 안 열렸으면 closeView(). 층: 검색어·지역·장바구니·품목 상세(App), 김장 시트·배추 종류(Kimjang), 반찬 시트(Banchan). 미리보기 점검용 window.__back().
