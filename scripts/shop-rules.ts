@@ -156,6 +156,12 @@ const CASES: [string, string, boolean][] = [
   ['saury', '동원 꽁치 통조림, 400g', false],
   ['imported-croaker', '중국산 조기 구이용, 1kg', true],
   ['imported-croaker', '영광 법성포 굴비 10미', false],
+  // 10/30 아침 점검: 코팅·기능성 쌀, 조미 오징어 간식 빼기
+  ['rice', '홍성 영양 클로렐라쌀, 1kg, 1개', false],
+  ['rice', '황미로압구정 오분도미 황미쌀 당일도정, 1kg, 1팩', false],
+  ['rice', '현대농산 국내산 백미, 5kg, 1개', true],
+  ['dried-squid', '꼬막이네 곡물창고 쫄쫄이 오징어, 400g, 10개', false],
+  ['dried-squid', '형기네 건오징어 몸통만, 4-5미, 150g, 1개', true],
 ];
 for (const [id, name, want] of CASES) {
   if (!SHOP_RULES[id]) continue;
