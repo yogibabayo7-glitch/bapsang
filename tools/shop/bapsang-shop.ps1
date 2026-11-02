@@ -508,7 +508,7 @@ if ($total -lt 5) { Log "상품이 너무 적어서($($total)개) 이번엔 올�
 
 $shop = [ordered]@{
   updatedAt  = (Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')
-  disclosure = '토스쇼핑 쉐어링크 활동으로, 구매 시 일정액의 수수료를 받을 수 있어요'
+  disclosure = '토스쇼핑 쉐어링크 활동의 일환으로, 링크를 통한 구매가 발생하면 일정 수수료를 지급받습니다.'
   pages      = $pages
   groups     = $out
   items      = $itemsOut

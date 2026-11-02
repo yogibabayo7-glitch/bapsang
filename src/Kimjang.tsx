@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Q, type PriceBook, type Shop, type ShopItem } from './data/types';
 import { getItem, openLink, saveResume, setItem, shareText, takeResume, track } from './platform';
 import { CabbageSheet, useCabbage } from './Cabbage';
-import { ShopStrip, domesticOnly, productsFor } from './Shop';
+import { Disclosure, ShopStrip, domesticOnly, productsFor } from './Shop';
 import { useBackLayer } from './back';
 
 // 김장 재료 → shop.json 김장 묶음(kimjang)의 카테고리 이름. 김장 묶음 상품을 먼저, 없으면 그 품목 상품
@@ -72,11 +72,12 @@ function KimjangCartGuide() {
         다만 토스 앱 상황에 따라 <b>토스 밖으로 나갈 때도 있어요.</b> 그럴 땐 오늘밥상물가를 30분 안에 다시 열면 이 창이
         그대로 열려요. 담은 재료는 <b>✓ 담음</b>으로 표시돼 있어요.
       </p>
+      <Disclosure />
     </div>
   );
 }
 
-// 계산기 아래 요약: 진행 막대 + 다음 재료 담기 + 대가성 문구
+// 계산기 아래 요약: 진행 막대 + 다음 재료 담기 (대가성 문구는 창 맨 위 안내사항 안에)
 function KimjangCartSummary({
   shop,
   lines,
@@ -107,9 +108,6 @@ function KimjangCartSummary({
           다음 재료 담으러 가기: {left.name} ›
         </button>
       )}
-      <p className="disclosure">
-        ⓘ {shop.disclosure || '토스쇼핑 쉐어링크 활동으로, 구매 시 일정액의 수수료를 받을 수 있어요'}
-      </p>
     </div>
   );
 }

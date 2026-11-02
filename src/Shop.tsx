@@ -4,6 +4,19 @@ import { SHOP_IMPORT_RE, SHOP_RULES } from './data/shopRules';
 import type { Shop, ShopItem } from './data/types';
 import { openLink, saveResume, track, type Resume } from './platform';
 
+// 대가성 문구 (토스쇼핑 쉐어링크 공식 권장 문구 + 공정위 2024.12 지침)
+// - 상품이 보이는 구역마다, 상품보다 **먼저** 보이게 넣어요. 맨 아래 작은 글씨는 '고지 미흡'이에요.
+// - "받을 수 있어요" 같은 조건부 표현은 못 써요 → "지급받습니다"로 끝내요.
+// - shop.json의 disclosure 값은 PC 스크립트가 예전 문구를 넣을 수 있어서 앱에선 쓰지 않고 이 문구를 고정으로 써요.
+export const DISCLOSURE = '토스쇼핑 쉐어링크 활동의 일환으로, 링크를 통한 구매가 발생하면 일정 수수료를 지급받습니다.';
+export function Disclosure() {
+  return (
+    <p className="disclosure" role="note">
+      <b>[광고]</b> {DISCLOSURE}
+    </p>
+  );
+}
+
 // 이 품목 상품이 맞나? — 그 품목 토스쇼핑 카테고리 상품이면서 이름 규칙(must/not/kr)을 통과해야 해요
 export function matchesItem(id: string, p: ShopItem): boolean {
   const r = SHOP_RULES[id];
@@ -90,6 +103,7 @@ export function ShopStrip({
   return (
     <div className="shop">
       {items.length > 0 && <h3>{title}</h3>}
+      <Disclosure />
       {items.length > 0 && (
       <div className="shopRow">
         {items.map((p) => (
@@ -114,7 +128,6 @@ export function ShopStrip({
           🥬 토스쇼핑 신선식품 더 보기
         </button>
       )}
-      <p className="disclosure">ⓘ {shop.disclosure || '토스쇼핑 쉐어링크 활동으로, 구매 시 일정액의 수수료를 받을 수 있어요'}</p>
     </div>
   );
 }

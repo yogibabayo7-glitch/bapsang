@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Shop, ShopItem } from './data/types';
 import { openLink, saveResume, track } from './platform';
-import { CABBAGE_KINDS, cabbageItems } from './Shop';
+import { Disclosure, CABBAGE_KINDS, cabbageItems } from './Shop';
 
 export function useCabbage(shop: Shop | null) {
   const all = cabbageItems(shop);
@@ -44,6 +44,7 @@ export function CabbageSheet({ shop, onClose }: { shop: Shop; onClose: () => voi
             </button>
           ))}
         </div>
+        <Disclosure />
         <div className="cbGrid">
           {items.map((p) => (
             <button key={p.id} className="shopItem" onClick={() => open(p)}>
@@ -55,7 +56,6 @@ export function CabbageSheet({ shop, onClose }: { shop: Shop; onClose: () => voi
             </button>
           ))}
         </div>
-        <p className="disclosure">ⓘ {shop.disclosure || '토스쇼핑 쉐어링크 활동으로, 구매 시 일정액의 수수료를 받을 수 있어요'}</p>
         <button className="btn ghost full" style={{ marginTop: 8 }} onClick={onClose}>
           닫기
         </button>

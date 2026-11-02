@@ -1,6 +1,7 @@
 // 반찬 모아 보기: 토스쇼핑 반찬 카테고리(볶음·조림·무침·장아찌·반찬세트·김치·젓갈·게장) 인기 상품을 종류별로 골라 봐요.
 // 상품은 사장님 PC가 매일 받아 둔 shop.json의 banchan에서 와요. 없으면 카드가 안 보여요.
 import { useEffect, useState } from 'react';
+import { Disclosure } from './Shop';
 import type { Shop, ShopItem } from './data/types';
 import { openLink, saveResume, takeResume, track } from './platform';
 import { useBackLayer } from './back';
@@ -78,6 +79,7 @@ export function BanchanCard({ shop }: { shop: Shop | null }) {
         ))}
       </div>
       <div className="shop">
+        <Disclosure />
         <div className="shopRow">
           {b.mix.map((p) => (
             <Item key={p.id} p={p} from="banchan" />
@@ -86,7 +88,6 @@ export function BanchanCard({ shop }: { shop: Shop | null }) {
         <button className="btn ghost full shopMore" onClick={() => show('all')}>
           반찬 {b.all.length}가지 모두 보기
         </button>
-        <p className="disclosure">ⓘ {shop.disclosure || '토스쇼핑 쉐어링크 활동으로, 구매 시 일정액의 수수료를 받을 수 있어요'}</p>
       </div>
       {open && <BanchanSheet shop={shop} start={open} onClose={() => setOpen(null)} />}
     </section>
@@ -118,12 +119,12 @@ function BanchanSheet({ shop, start, onClose }: { shop: Shop; start: string; onC
             </button>
           ))}
         </div>
+        <Disclosure />
         <div className="cbGrid">
           {items.map((p) => (
             <Item key={p.id} p={p} from="banchan" kind={sel} />
           ))}
         </div>
-        <p className="disclosure">ⓘ {shop.disclosure || '토스쇼핑 쉐어링크 활동으로, 구매 시 일정액의 수수료를 받을 수 있어요'}</p>
         <button className="btn ghost full" style={{ marginTop: 8 }} onClick={onClose}>
           닫기
         </button>
