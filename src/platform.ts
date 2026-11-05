@@ -187,7 +187,11 @@ export type TrackEvent =
   | 'shop_clicked' // 토스쇼핑 상품 누름 (보상 없음)
   | 'compare_regions_tapped' // '다른 지역은 얼마?' 버튼 누름
   | 'compare_regions_unlocked' // 보상형 광고 보고 지역 비교 열림
-  | 'interstitial_shown'; // 전면 광고 노출
+  | 'interstitial_shown' // 전면 광고 노출
+  | 'review_requested' // 리뷰 요청 창 띄움 (reason=shared·shop_return)
+  | 'alert_agreed' // 김장 알림 신청 (result=new·already·rejected)
+  | 'kimjang_shared' // 김장 계산 결과 공유
+  | 'share_link_opened'; // 카톡 공유 링크로 들어옴 (to=kimjang)
 
 export function track(name: TrackEvent, params: Record<string, string | number> = {}): void {
   try {

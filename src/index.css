@@ -780,3 +780,7 @@ h2 {
 .kjGuide p b { color: #1b64da; }
 .kjSheetNote { margin: 14px 0 0; font-size: 12px; }
 .kjGuide p + p { margin-top: 6px; }
+
+/* 김장 알림 신청 (11/5) */
+.kjAlert { margin-top: 10px; }
+.kjAlertMsg { margin-top: 6px; text-align: center; color: var(--g700, #4b5262); }

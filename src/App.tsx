@@ -7,6 +7,7 @@ import { BanchanCard } from './Banchan';
 import { ShopStrip, productsFor } from './Shop';
 import { ICONS, ICON_OF } from './icons';
 import { initBackHandler, useBackLayer } from './back';
+import { appLink, askReview, countVisit } from './growth';
 import { BANNER_AD_ID, REWARD_AD_ID, attachBanner, getItem, maybeShowInterstitial, preloadAds, setItem, shareText, showRewarded, track, takeResume } from './platform';
 
 type Compare = 'day' | 'week';
@@ -129,12 +130,14 @@ export default function App() {
       if (c === 'day' || c === 'week') setCompare(c);
       setBook(b);
       track('price_viewed', { region: r || 'all' });
+      countVisit();
       loadShop().then(setShop);
       // 토스쇼핑 다녀와서 다시 열면 보던 품목 상세를 다시 열어요
       takeResume().then((rs) => {
         if (rs?.k === 'detail' && b.items.some((it) => it.id === rs.id)) {
           setDetail(rs.id);
           track('resume_opened', { to: 'detail' });
+          window.setTimeout(() => void askReview('shop_return'), 1500);
         }
       });
       preloadAds();
@@ -504,11 +507,16 @@ export default function App() {
             const lines = (favRows.length ? favRows : bestBuys.length ? bestBuys : rows.slice(0, 5)).map(
               (r) => `${r.emoji} ${r.name}(${r.unit}) ${won(r.price)} ${arrow(r.pct)}${pctText(r.pct)}`,
             );
+            const link = await appLink();
             const ok = await shareText(
               `오늘밥상물가 · ${dateLabel(book.date)} ${regionName} 평균 시세\n${lines.join('\n')}` +
-                (basket.length ? `\n🧺 우리집 장바구니 ${won(basketNow)} (${COMPARE_LABEL[compare]}보다 ${basketDiff >= 0 ? '+' : '-'}${won(Math.abs(basketDiff))})` : ''),
+                (basket.length ? `\n🧺 우리집 장바구니 ${won(basketNow)} (${COMPARE_LABEL[compare]}보다 ${basketDiff >= 0 ? '+' : '-'}${won(Math.abs(basketDiff))})` : '') +
+                `\n\n👉 오늘밥상물가에서 우리 동네 시세 보기\n${link}`,
             );
-            if (ok) track('summary_shared');
+            if (ok) {
+              track('summary_shared');
+              window.setTimeout(() => void askReview('shared'), 800);
+            }
             showToast(ok ? '공유할 준비가 됐어요' : '공유하지 못했어요');
           }}
         >

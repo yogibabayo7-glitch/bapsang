@@ -1,6 +1,7 @@
 // 김장 물가 계산기: 배추 N포기 김장에 드는 재료값을 오늘 시세로 계산해요
 import { useEffect, useState } from 'react';
 import { Q, type PriceBook, type Shop, type ShopItem } from './data/types';
+import { alertSupported, appLink, askAlert, askReview, openTarget } from './growth';
 import { getItem, openLink, saveResume, setItem, shareText, takeResume, track } from './platform';
 import { CabbageSheet, useCabbage } from './Cabbage';
 import { Disclosure, ShopStrip, domesticOnly, productsFor } from './Shop';
@@ -260,6 +261,7 @@ export function KimjangCard({
   const [skip, setSkip] = useState<Set<string>>(new Set());
   const [adj, setAdj] = useState<Record<string, number>>({});
   const [open, setOpen] = useState(false);
+  const [alertMsg, setAlertMsg] = useState('');
   const [cabbageOpen, setCabbageOpen] = useState(false);
   useBackLayer(open, () => setOpen(false));
   useBackLayer(cabbageOpen, () => setCabbageOpen(false));
@@ -267,10 +269,16 @@ export function KimjangCard({
   const cart = useKimjangCart(shop);
   // 토스쇼핑 다녀와서 앱을 다시 열면 '재료 고르고 담기' 창을 그대로 다시 열고, 방금 담은 재료 줄로 이동
   useEffect(() => {
+    // 카톡 공유 링크(open=kimjang)로 들어오면 김장 창부터 열어요
+    if (openTarget() === 'kimjang') {
+      setOpen(true);
+      track('share_link_opened', { to: 'kimjang' });
+    }
     takeResume().then((r) => {
       if (r?.k === 'kimjang') {
         setOpen(true);
         track('resume_opened', { to: 'kimjang' });
+        window.setTimeout(() => void askReview('shop_return'), 1500);
         if (r.ing)
           setTimeout(() => document.querySelector(`[data-ing="${r.ing}"]`)?.scrollIntoView({ block: 'center' }), 350);
       } else if (r?.k === 'cabbage') {
@@ -420,6 +428,25 @@ export function KimjangCard({
           {cabbage.kinds.length > 0 && <small>{cabbage.kinds.map((k) => k.label).join(' · ')}</small>}
         </button>
       )}
+      {alertSupported('kimjang') && (
+        <button
+          className="btn ghost full kjAlert"
+          onClick={() =>
+            askAlert('kimjang', (res) =>
+              setAlertMsg(
+                res === 'new' || res === 'already'
+                  ? '알림 신청이 됐어요. 김장철 재료값을 한 번 알려 드릴게요.'
+                  : res === 'rejected'
+                    ? '알림 신청을 취소했어요.'
+                    : '지금은 알림 신청을 할 수 없어요.',
+              ),
+            )
+          }
+        >
+          🔔 김장철 재료값 알림 받기
+        </button>
+      )}
+      {alertMsg && <p className="hint kjAlertMsg">{alertMsg}</p>}
       {cabbageOpen && shop && <CabbageSheet shop={shop} onClose={() => setCabbageOpen(false)} />}
 
       {open && (
@@ -523,12 +550,17 @@ export function KimjangCard({
               style={{ marginTop: 12 }}
               onClick={async () => {
                 const y = r.year;
-                await shareText(
+                const link = await appLink('kimjang');
+                const ok = await shareText(
                   `🥬 올해 우리집 김장 (배추 ${heads}포기)\n재료값 약 ${won(r.total)} (1포기당 약 ${won(r.perHead)})` +
                     (r.skipped > 0 ? `\n집에 있는 재료 ${r.skipped}가지는 뺐어요` : '') +
                     (y ? `\n작년보다 ${won(Math.abs(y.diff))} ${y.diff >= 0 ? '더' : '덜'} 들어요` : '') +
-                    `\n- 오늘밥상물가`,
+                    `\n\n👉 우리집 김장 재료값 계산해 보기\n${link}`,
                 );
+                if (ok) {
+                  track('kimjang_shared', { heads });
+                  window.setTimeout(() => void askReview('shared'), 800);
+                }
               }}
             >
               가족에게 공유하기
