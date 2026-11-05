@@ -140,6 +140,13 @@ export function chooseItems(all: Map<string, Row[]>): Chosen[] {
     const sameCode = rows.filter((r) => r.code === entry.code);
     if (sameCode.length) usedCodes.add(entry.code); // 국산이 없어도 수입 품종이 '새 품목'으로 따로 붙지 않게
     let match = sameCode.filter((r) => entry.kind === '*' || r.kind === entry.kind);
+    // 지정한 품종이 오늘 조사에 없으면(KAMIS 품종 코드가 바뀌는 등) 같은 품목의 다른 품종으로 대신해요
+    let wantKind = entry.kind;
+    if (!match.length && entry.kind !== '*' && sameCode.length) {
+      console.log(`${entry.name}: 품종 ${entry.kind} 조사값이 없어 다른 품종으로 대신해요 (${[...new Set(sameCode.map((r) => `${r.kind} ${r.kindName}`))].join(', ')})`);
+      match = sameCode;
+      wantKind = '*';
+    } else if (!sameCode.length) console.log(`${entry.name}: 오늘 KAMIS 조사값 없음 (품목 ${entry.code})`);
     // 국산만: 품목·품종 이름에 수입/중국산 등이 들어간 줄은 빼요
     if (entry.origin === 'kr') match = match.filter((r) => !IMPORTED_RE.test(`${r.name} ${r.kindName}`));
     if (!match.length) {
@@ -151,7 +158,7 @@ export function chooseItems(all: Map<string, Row[]>): Chosen[] {
     match.forEach((r) => kindCount.set(r.kind, (kindCount.get(r.kind) ?? 0) + 1));
     const isKr = (k: string) => (entry.origin === 'kr' && match.some((r) => r.kind === k && DOMESTIC_RE.test(`${r.name} ${r.kindName}`)) ? 1 : 0);
     const kind =
-      entry.kind !== '*' ? entry.kind : [...kindCount.entries()].sort((a, b) => isKr(b[0]) - isKr(a[0]) || b[1] - a[1])[0][0];
+      wantKind !== '*' ? wantKind : [...kindCount.entries()].sort((a, b) => isKr(b[0]) - isKr(a[0]) || b[1] - a[1])[0][0];
     const ofKind = match.filter((r) => r.kind === kind);
     const order = rankOrder(entry);
     const ranks = [...new Set(ofKind.map((r) => r.rank))].sort(
