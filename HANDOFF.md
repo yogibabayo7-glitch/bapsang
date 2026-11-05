@@ -7,6 +7,10 @@
 - 그 전엔 작업 컨테이너 미리보기(390px 화면 캡처)로 확인하고, 여러 수정은 모아서 한 번에 올리기.
 - 검토 요청은 언제나 사장님이 직접.
 
+## 11/5 15:15 — v0.6.3 테스트 업로드(사장님 '너가 생각하는대로' 허락) + 미리보기 캡처
+- 테스트 링크: intoss-private://bapsang-price?_deploymentId=01a1aa55-a82a-72ae-8ac1-705fd9d31ff8&host=appsInTossHost — 사장님 폰 확인 후 검토 요청은 사장님이 직접.
+- 콘솔 미리보기 새 캡처 `release/store/오늘밥상물가-미리보기-1~3-*.png`(636×1048). 고정 그림이라 홈 날짜(.date)는 숨기고 찍음 — 화면 바뀌는 버전마다 다시 캡처.
+
 ## 11/5 14:20 — v0.6.3: 리뷰 요청·김장 알림 신청·카톡 공유 그림 (앱인토스 웨비나 정리, 생애혜택 v0.5.1과 같은 방식)
 - `src/growth.ts` 새로. 리뷰 요청(Review.request): 시세·김장 결과 공유 성공 직후, 토스쇼핑 다녀와 이어 보기로 돌아왔을 때. 한 세션 1번·30일 1번·2번째 방문부터. 노출 여부에 흐름 안 묶음.
 - 공유: Share.createLink(`intoss://bapsang-price`, 김장은 `?open=kimjang`) + ogImageUrl → 메시지 끝에 링크. 링크로 들어오면 김장 창 바로 열림(Environment.initialURL). 못 만들면 tossminiapp.com/s/bF5eRzSo.
