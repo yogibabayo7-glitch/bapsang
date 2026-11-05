@@ -41,6 +41,18 @@ function dateLabel(day: string) {
   return `${d.getMonth() + 1}월 ${d.getDate()}일 (${'일월화수목금토'[d.getDay()]})`;
 }
 
+// 맨 위 날짜는 늘 오늘 (11/5 사장님). 조사일이 오늘이 아니면 조사일도 같이 (어제 값을 오늘 값이라 하지 않게)
+function todayKey() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`;
+}
+function todayLine(day: string) {
+  const t = todayKey();
+  if (day === t) return `오늘 ${dateLabel(t)} 평균 시세`;
+  const d = new Date(day + 'T00:00:00');
+  return `오늘 ${dateLabel(t)} · ${d.getMonth() + 1}월 ${d.getDate()}일 조사 시세`;
+}
+
 // 초성 검색 (ㄱㄹ → 계란)
 const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
 function chosung(s: string) {
@@ -294,7 +306,7 @@ export default function App() {
           <div>
             <h1>오늘밥상물가</h1>
             <p className="date">
-              {dateLabel(book.date)} 평균 시세
+              {todayLine(book.date)}
               {regionObj && regionNote(regionObj) && <span className="note">{regionNote(regionObj)}</span>}
             </p>
           </div>
