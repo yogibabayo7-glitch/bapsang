@@ -179,6 +179,20 @@ const CASES: [string, string, boolean][] = [
   ['rice', '현대농산 국내산 백미, 5kg, 1개', true],
   ['dried-squid', '꼬막이네 곡물창고 쫄쫄이 오징어, 400g, 10개', false],
   ['dried-squid', '형기네 건오징어 몸통만, 4-5미, 150g, 1개', true],
+  // 11/06 아침 점검: 돼지갈비에 소고기 세트, 팥에 캐나다산, 망고에 포포, 오징어에 초코오징어, 쌀·찹쌀에 찐쌀
+  ['pork-rib', '배터지는 소고기 한판 세트, 등심살 300g + 살치살 200g + 부채살 200g + 갈비살 200g + 우삼겹 300g, 1.2kg, 1세트', false],
+  ['pork-rib', '맛춤상회 소고기 모둠 200g 5팩 세트, 갈비살, 200g, 1개 + 토시살, 200g, 1개', false],
+  ['pork-rib', '한돈 생갈비 구이용, 1kg, 1개', true],
+  ['red-bean', '현대농산 캐나다산 적두 팥, 4kg, 1개', false],
+  ['red-bean', '정선 토종 햇 적두 팥, 1kg, 1봉', true],
+  ['mango', '포포나무 열매, 소, 망고 바나나맛, 1kg, 1박스', false],
+  ['mango', '피치망고, 특대, 4kg, 1박스', true],
+  ['squid', '땡큐파머스 초코오징어, 1kg, 1팩', false],
+  ['squid', '손질 통오징어, 260g, 2미, 2개', true],
+  ['rice', '영원농산 국내산 올벼쌀, 1kg, 1개', false],
+  ['glutinous-rice', '힘찬농부오달봉 국산 찹쌀찐쌀, 500g, 1개', false],
+  ['glutinous-rice', '현대농산 국내산 찹쌀, 5kg', true],
+  ['walnut', '다맘 햇 호두, 캘리포니아산, 1kg, 1개', true],
 ];
 for (const [id, name, want] of CASES) {
   if (!SHOP_RULES[id]) continue;
