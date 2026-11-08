@@ -28,6 +28,13 @@ const ok = (id: string, name: string) => {
 
 // [품목, 상품 이름, 통과해야 하나]
 const CASES: [string, string, boolean][] = [
+  ['rice', '한국우리밀농협 우리밀 통밀쌀, 1kg, 2개', false], // 11/08
+  ['rice', '칼로스쌀, 20kg, 1개', false],
+  ['rice', '현대농산 한입만 백미 쌀, 상등급, 국내산, 10kg, 1개', true],
+  ['red-bean', '삶은팥, 5kg, 1개', false],
+  ['red-bean', '현대농산 국내산 팥 적두, 500g, 2개', true],
+  ['pork-rib', '봄내푸드 춘천닭갈비, 500g, 2개', false],
+  ['pork-rib', '한돈 돼지갈비 찜용, 1kg', true],
   ['lettuce', '국내산 청상추, 200g, 1봉', true],
   ['lettuce', '마른줄기 상추 궁채, 300g, 1개', false],
   ['lettuce', '모듬 쌈채소 (상추 깻잎 케일), 500g', false],
