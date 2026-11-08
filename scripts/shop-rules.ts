@@ -3,7 +3,7 @@
 // 같이 하는 일: 품목마다 규칙이 있는지, 정규식이 맞는지, 헷갈리기 쉬운 상품 이름으로 시험
 import { writeFileSync } from 'node:fs';
 import { CATALOG } from '../src/data/catalog.ts';
-import { SHOP_IMPORT_RE, SHOP_RULES } from '../src/data/shopRules.ts';
+import { BANCHAN_NOT, SHOP_BLOCK, SHOP_IMPORT_RE, SHOP_RULES } from '../src/data/shopRules.ts';
 
 let bad = 0;
 const fail = (m: string) => {
@@ -29,6 +29,8 @@ const ok = (id: string, name: string) => {
 // [품목, 상품 이름, 통과해야 하나]
 const CASES: [string, string, boolean][] = [
   ['rice', '한국우리밀농협 우리밀 통밀쌀, 1kg, 2개', false], // 11/08
+  ['red-pepper', '국내산 반홍 청양고추, 5kg, 1개', false],
+  ['red-pepper', '국내산 홍고추, 5kg, 1개', true],
   ['rice', '칼로스쌀, 20kg, 1개', false],
   ['rice', '현대농산 한입만 백미 쌀, 상등급, 국내산, 10kg, 1개', true],
   ['red-bean', '삶은팥, 5kg, 1개', false],
@@ -227,9 +229,22 @@ while (left.length) {
   order.push(next.id);
 }
 
+for (const id of Object.keys(SHOP_BLOCK)) if (!/^\d+$/.test(id)) fail(`block 번호는 숫자만: ${id}`);
+for (const [n, want] of [
+  ['반건조 명태(코다리), 40cm, 5마리', false],
+  ['맛있는집밥 김치찜, 500g, 1개', false],
+  ['꽈리고추 멸치볶음, 120g, 1개', true],
+  ['맛꾼 메추리알 장조림, 1kg, 1개', true],
+  ['이씨네김치 이씨네 전라도 포기김치, 5kg, 1개', true],
+  ['푸드앳홈 명태회무침, 500g, 1개', true],
+] as [string, boolean][])
+  if (!new RegExp(BANCHAN_NOT, 'i').test(n) !== want) fail(`반찬 시험 실패: ${n} (기대 ${want})`);
+
 const out = {
   updatedAt: new Date().toISOString(),
   importRe: SHOP_IMPORT_RE,
+  block: Object.keys(SHOP_BLOCK),
+  banchanNot: BANCHAN_NOT,
   oldAppOrder: order,
   // 예전 앱이 품목을 찾는 정규식 (PC 스크립트가 실제 상품 이름으로 순서를 다시 맞출 때 씀)
   oldAppRe: Object.fromEntries(CATALOG.map((c) => [c.id, oldRe(c.name).source])),

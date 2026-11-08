@@ -2,6 +2,7 @@
 # 매일 한 번 실행: 토스쇼핑 카테고리 베스트 → 내 쉐어링크 발급 → GitHub에 shop.json 올리기
 # 이 컴퓨터의 인터넷 주소(IP)가 쉐어링크 'API 키 발급' 화면의 출발지 IP에 등록돼 있어야 해요.
 # 같은 폴더에 shop-lib.ps1(공통 부분)이 꼭 있어야 해요.
+# 11/08 판: GitHub 규칙표의 block(잘못 들어간 상품 번호)·banchanNot(반찬에서 뺄 말)도 따라요 → 고정 상품까지 저장소에서 바로 뺄 수 있어요.
 
 $Here = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not (Test-Path (Join-Path $Here 'shop-lib.ps1'))) {
@@ -9,6 +10,12 @@ if (-not (Test-Path (Join-Path $Here 'shop-lib.ps1'))) {
   exit 1
 }
 . (Join-Path $Here 'shop-lib.ps1')
+
+# 품목 규칙을 먼저 받아요 (규칙표의 block 번호를 김장·배추·품목·고정·반찬 전부에서 빼려고)
+$rules = Load-Rules
+$nBlock = 0
+if ($rules -and $rules.block) { $Block = @($Block) + @($rules.block | ForEach-Object { [string]$_ }); $nBlock = @($rules.block).Count }
+Log "규칙표 빼는 상품 $nBlock 개 적용 (11/08 판)"
 
 Log "카테고리 $($flat.Count)개 중 식품 $($food.Count)개 · 오늘 이미 쓴 조회 $($Q.used)개 · 저장해 둔 오늘 순위 $BestCached 개 카테고리"
 
@@ -141,7 +148,7 @@ foreach ($g in $Groups.Keys) {
 #     (토스쇼핑엔 '산지직송 국내산 햇 열무'처럼 옆 카테고리에 올라간 상품이 많아요. 이름 규칙은 똑같이)
 #  ⑤ 한도가 남으면 12개보다 적은 품목도 같은 카테고리 3쪽까지
 #  ⑥ 고정 상품(규칙표 pin + 이 컴퓨터 pins.json)은 맨 앞에. 이름 규칙 안 봐요(사람이 고른 거라), 품절·판매 끝은 빼요
-$rules = Load-Rules
+# (품목 규칙은 맨 위에서 이미 받았어요)
 $itemsOut = [ordered]@{}
 $prodById = [ordered]@{}
 $ItemSt = [ordered]@{}
@@ -296,6 +303,7 @@ try {
         $id = [string]$it.tacaItemId; $nm = [string]$it.displayName
         if ($bSeen.ContainsKey($id) -or $it.isSoldOut -or $Block -contains $id -or -not $it.thumbnailUrl) { continue }
         if ($nm -match $BanchanNot) { continue }
+        if ($rules -and $rules.banchanNot -and $nm -match [string]$rules.banchanNot) { continue }
         $bn = Base-Name $nm
         if ($bases.ContainsKey($bn)) { continue }
         $url = Get-Link $it
@@ -413,6 +421,7 @@ if ($rules -and $rules.items) {
       if (-not $p -or -not $pinDet.ContainsKey($p) -or $pinDet[$p] -is [string]) { continue }
       $it = $pinDet[$p]
       if ($it.isSoldOut -or -not $it.thumbnailUrl -or $used.ContainsKey($p) -or $used.ContainsKey([string]$it.tacaItemId)) { continue }
+      if ($Block -contains $p -or $Block -contains [string]$it.tacaItemId) { continue }   # 11/08: 규칙표 block은 고정 상품에서도 빼요
       $used[$p] = $true; $used[[string]$it.tacaItemId] = $true; $bases[(Base-Name ([string]$it.displayName))] = $true
       [void]$chosen.Add([pscustomobject]@{ it = $it; cat = $leaf; pin = $true })
       $pinned++
