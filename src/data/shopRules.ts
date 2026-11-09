@@ -104,8 +104,8 @@ export const SHOP_RULES: Record<string, ShopRule> = {
   peanut: {
     cats: ['견과류 > 일반땅콩'],
     must: '땅콩',
-    not: '버터|잼|크림|과자|카라멜|캬라멜|강정|엿|가미|허니|소스|오일|기름|땅콩빵|' + PROC,
-    kr: true, // KAMIS 땅콩은 국산 품종 (10/29: 미국산 구운 땅콩 섞임)
+    not: '버터|잼|크림|과자|카라멜|캬라멜|강정|엿|가미|허니|소스|오일|기름|땅콩빵|레드|머거본|' + PROC,
+    kr: true, // KAMIS 땅콩은 국산 품종 (10/29: 미국산 구운 땅콩 섞임, 11/09: 원산지 없는 레드땅콩(대개 수입)·머거본 간식 땅콩 섞임)
   },
   walnut: { cats: ['견과류 > 호두'], must: '호두', not: '과자|파이|정과|강정|율무|라떼|우유|두유|믹스|혼합|하루견과|빵|' + PROC },
   almond: {
@@ -195,7 +195,7 @@ export const SHOP_RULES: Record<string, ShopRule> = {
   'mackerel-fillet-kr': {
     cats: ['생선 > 고등어', '생선 > 자반고등어'],
     must: '^(?=.*고등어)(?=.*(필렛|필레|순살))',
-    not: '노르웨이|수입|구이|조림|통조림|캔|스테이크|' + PROC,
+    not: '노르웨이|수입|구이|조림|통조림|캔|스테이크|렌지|' + PROC, // 11/09: 데워 먹는 렌지고등어(조리품) 섞임
     prefer: '국내산|국산|제주|부산|안동',
   },
   'mackerel-fillet-imp': {
@@ -243,4 +243,4 @@ export const SHOP_BLOCK: Record<string, string> = {
   '2654094375': '반찬: 김치찜(요리, 김치 아님)',
 };
 // 반찬 모아 보기에서 이름에 있으면 빼는 말 (PC 스크립트 기본 규칙에 더해요)
-export const BANCHAN_NOT = '코다리|반건조|김치찜|간식';
+export const BANCHAN_NOT = '코다리|반건조|김치찜|간식|새우젓'; // 11/09: 새우젓(김장 양념)

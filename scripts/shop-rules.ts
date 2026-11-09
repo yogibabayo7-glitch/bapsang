@@ -29,6 +29,11 @@ const ok = (id: string, name: string) => {
 // [품목, 상품 이름, 통과해야 하나]
 const CASES: [string, string, boolean][] = [
   ['rice', '한국우리밀농협 우리밀 통밀쌀, 1kg, 2개', false], // 11/08
+  ['peanut', '볶은 땅콩 레드땅콩, 500g, 2봉', false], // 11/09
+  ['peanut', '머거본 볶음땅콩, 300g, 6개', false],
+  ['peanut', '여주산 국내산 볶은 땅콩, 500g, 1개', true],
+  ['mackerel-fillet-kr', '단먹고 간편 순살 렌지고등어, 300g, 7쪽, 1팩', false],
+  ['mackerel-fillet-kr', '안동맛자반 순살 간고등어, 80g, 10팩', true],
   ['red-pepper', '국내산 반홍 청양고추, 5kg, 1개', false],
   ['red-pepper', '국내산 홍고추, 5kg, 1개', true],
   ['rice', '칼로스쌀, 20kg, 1개', false],
@@ -237,6 +242,8 @@ for (const [n, want] of [
   ['맛꾼 메추리알 장조림, 1kg, 1개', true],
   ['이씨네김치 이씨네 전라도 포기김치, 5kg, 1개', true],
   ['푸드앳홈 명태회무침, 500g, 1개', true],
+  ['푸드앳홈 새우젓, 1kg, 2개', false], // 11/09
+  ['어촌명가 간장 깐새우장, 500g, 3개', true],
 ] as [string, boolean][])
   if (!new RegExp(BANCHAN_NOT, 'i').test(n) !== want) fail(`반찬 시험 실패: ${n} (기대 ${want})`);
 
