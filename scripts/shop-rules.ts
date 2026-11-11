@@ -1,7 +1,7 @@
 // src/data/shopRules.ts → docs/data/shop-rules.json (사장님 PC의 bapsang-shop.ps1이 매일 내려받아 써요)
 // 실행: node scripts/shop-rules.ts   (규칙을 고친 뒤 한 번 돌리고 커밋하면 다음 날 아침 수집부터 반영)
 // 같이 하는 일: 품목마다 규칙이 있는지, 정규식이 맞는지, 헷갈리기 쉬운 상품 이름으로 시험
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { CATALOG } from '../src/data/catalog.ts';
 import { BANCHAN_NOT, SHOP_BLOCK, SHOP_IMPORT_RE, SHOP_RULES } from '../src/data/shopRules.ts';
 
@@ -166,6 +166,9 @@ const CASES: [string, string, boolean][] = [
   ['chicken', '오븐 닭다리 구이, 300g, 3팩', false],
   ['chicken', '닭발 편육, 500g', false],
   ['chicken', '동물복지 닭백숙용 통닭 11호, 1,000g, 1개', true],
+  ['pork-rib', '한돈 돼지갈비 찜용, 냉장, 1kg', true], // 11/11: 정육 카테고리
+  ['imported-pork', '스페인산 냉동 삼겹살, 1kg', true],
+  ['pork-belly', '한돈 냉장 삼겹살 구이용, 500g', true],
   ['mackerel', '국내산 손질 고등어살, 특대, 170g, 1개', false],
   ['mackerel', '국내산 가시없는 고등어, 600g, 1개', false],
   ['mackerel', '오아시스 손질 푸른바다 고등어, 360g, 1개', true],
@@ -219,6 +222,19 @@ const CASES: [string, string, boolean][] = [
 for (const [id, name, want] of CASES) {
   if (!SHOP_RULES[id]) continue;
   if (ok(id, name) !== want) fail(`${id}: "${name}" → ${want ? '통과해야 하는데 빠짐' : '빠져야 하는데 통과'}`);
+}
+
+// 11/11: 토스쇼핑이 고기 카테고리 '생고기'를 '정육'으로 바꿔서 고기 품목이 선물세트만 남았음 →
+// 가장 최근 shop.json의 카테고리 목록에 규칙 카테고리가 다 있는지 확인 (없으면 PC가 그 카테고리를 건너뜀)
+try {
+  const shop = JSON.parse(readFileSync(new URL('../docs/data/shop.json', import.meta.url), 'utf8'));
+  const paths: string[] = (shop.categories ?? []).map((c: { path: string }) => c.path);
+  if (paths.length > 100)
+    for (const [id, r] of Object.entries(SHOP_RULES))
+      for (const s of r.cats)
+        if (!paths.some((p) => p === s || p.endsWith(' > ' + s))) fail(`토스쇼핑에 없는 카테고리: ${id} (${s})`);
+} catch {
+  console.warn('(shop.json 카테고리 목록을 못 읽어 카테고리 확인은 건너뜀)');
 }
 
 if (bad) {
