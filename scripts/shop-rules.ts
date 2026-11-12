@@ -218,6 +218,15 @@ const CASES: [string, string, boolean][] = [
   ['glutinous-rice', '힘찬농부오달봉 국산 찹쌀찐쌀, 500g, 1개', false],
   ['glutinous-rice', '현대농산 국내산 찹쌀, 5kg', true],
   ['walnut', '다맘 햇 호두, 캘리포니아산, 1kg, 1개', true],
+  // 11/12 아침 점검: 감자에 히카마, 무에 수박무·자색무, 땅콩에 찹쌀땅콩(과자), 굴비에 찐보리굴비(조리품)
+  ['potato', '경남 거창 무농약인증 히카마감자, 혼합과, 5kg, 1박스', false],
+  ['potato', '수미감자, 3kg, 1박스', true],
+  ['radish', '싱싱햇 무주 수박무 자색무 과일 동치미 햇 무, 3kg, 1박스', false],
+  ['radish', '제주 월동무, 5kg, 1개', true],
+  ['peanut', '산과들에 찹쌀땅콩, 800g, 3봉, 1세트', false],
+  ['peanut', '대성농협 생알땅콩, 고소한, 1kg, 2개', true],
+  ['gulbi', '찐보리굴비, 특대, 내장제거, 10팩, 1박스', false],
+  ['gulbi', '해림참바다 영광 법성포 굴비, 30마리, 1.9kg', true],
 ];
 for (const [id, name, want] of CASES) {
   if (!SHOP_RULES[id]) continue;
@@ -268,6 +277,8 @@ for (const [n, want] of [
   ['푸드앳홈 명태회무침, 500g, 1개', true],
   ['푸드앳홈 새우젓, 1kg, 2개', false], // 11/09
   ['어촌명가 간장 깐새우장, 500g, 3개', true],
+  ['한울 정성가득 비빔밥용 나물세트, 125g, 1개', false], // 11/12
+  ['반찬세트 3종 양념깻잎 콩자반 고들빼기무침, 300g, 3개', true],
 ] as [string, boolean][])
   if (!new RegExp(BANCHAN_NOT, 'i').test(n) !== want) fail(`반찬 시험 실패: ${n} (기대 ${want})`);
 
