@@ -185,6 +185,8 @@ const CASES: [string, string, boolean][] = [
   ['almond', '산과들에 인절미아몬드, 20g, 50봉, 1세트', false],
   ['almond', '오븐에 구운 유기농 아몬드 크리스피, 60g, 1개', false],
   ['almond', '넌패럴 등급 볶은아몬드, 500g, 2봉', true],
+  ['almond', 'HBAF 미니 4가지맛 시즈닝 아몬드 팩, 20g, 20개', false],
+  ['almond', '웰넛 구운 아몬드, 500g, 2개', true],
   ['hairtail', '뚱띠 대서양 절단갈치, 1kg, 1개', false],
   ['hairtail', '제주 은갈치, 대, 350g, 1개', true],
   ['squid', '삼둥이수산 냉동 베이트 통오징어, 3kg, 10미, 1개', false],
