@@ -45,7 +45,8 @@ export function askAlert(key: string, done: (r: AlertResult) => void): void {
   }
 }
 
-// ── 리뷰 요청: 핵심 일을 마친 순간 — 시세·김장 계산을 가족에게 공유한 직후, 토스쇼핑에서 담고 돌아왔을 때
+// ── 리뷰 요청: 시세·김장 계산을 가족에게 공유한 직후에만 (사용자가 스스로 한 행동 뒤).
+// 11/16 심사 점검: 토스쇼핑 복귀 때 저절로 띄우는 건 다크패턴 소지라 뺌.
 //    한 세션에 한 번, 30일에 한 번, 두 번째 방문부터만.
 const REVIEW_KEY = 'jb.review.v1';
 const VISIT_KEY = 'jb.visits.v1';
@@ -59,7 +60,7 @@ export function countVisit(): void {
   });
 }
 
-export async function askReview(reason: 'shared' | 'shop_return'): Promise<void> {
+export async function askReview(reason: 'shared'): Promise<void> {
   if (askedThisSession) return;
   try {
     if (!Review.request.isSupported()) return;

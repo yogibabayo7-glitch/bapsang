@@ -278,7 +278,7 @@ export function KimjangCard({
       if (r?.k === 'kimjang') {
         setOpen(true);
         track('resume_opened', { to: 'kimjang' });
-        window.setTimeout(() => void askReview('shop_return'), 1500);
+        // 11/16 심사 점검: 돌아온 순간 저절로 뜨는 리뷰창은 다크패턴 소지 → shop_return 리뷰 요청 뺌
         if (r.ing)
           setTimeout(() => document.querySelector(`[data-ing="${r.ing}"]`)?.scrollIntoView({ block: 'center' }), 350);
       } else if (r?.k === 'cabbage') {

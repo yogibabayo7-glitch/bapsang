@@ -149,7 +149,7 @@ export default function App() {
         if (rs?.k === 'detail' && b.items.some((it) => it.id === rs.id)) {
           setDetail(rs.id);
           track('resume_opened', { to: 'detail' });
-          window.setTimeout(() => void askReview('shop_return'), 1500);
+          // 11/16 심사 점검: 돌아온 순간 저절로 뜨는 리뷰창은 다크패턴 소지 → shop_return 리뷰 요청 뺌
         }
       });
       preloadAds();
