@@ -1,0 +1,20 @@
+{
+  "name": "my-diary",
+  "private": true,
+  "version": "0.1.10",
+  "type": "module",
+  "scripts": {
+    "build": "vite build && ait build"
+  },
+  "dependencies": {
+    "@apps-in-toss/devtools": "^3.9.0",
+    "@apps-in-toss/web-framework": "3.9.0",
+    "@fontsource/gaegu": "^5.3.0",
+    "@fontsource/hi-melody": "^5.3.0",
+    "@fontsource/nanum-pen-script": "^5.3.0",
+    "@fontsource/nunito": "^5.3.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.4"
+  }
+}

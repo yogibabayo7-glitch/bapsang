@@ -1,0 +1,4 @@
+/* 0.1.9: 교보 손글씨 2가지를 앱 코드에 직접 묶었어요 (WOFF2 = 글씨 모양 그대로, 용량만 압축).
+   이 폴더(src/fonts)의 .woff2 파일이 빠지면 번들 만들기가 오류로 멈춰요 — 글씨가 조용히 사라지는 일을 막는 안전장치 */
+@font-face{font-family:'KyoboPSW';src:url('./KyoboHandwriting2024psw.woff2') format('woff2');font-display:swap}
+@font-face{font-family:'KyoboLYB';src:url('./KyoboHandwriting2025lyb.woff2') format('woff2');font-display:swap}
