@@ -28,11 +28,15 @@ jobs:
           MEMO: ${{ github.event.head_commit.message }}
         run: |
           if [ -z "$AIT_API_KEY" ]; then echo "AIT_API_KEY 비밀 값이 없어요"; exit 1; fi
+          set -o pipefail
           shopt -s nullglob
+          FILES=(release/incoming/*.ait)
+          [ ${#FILES[@]} -gt 0 ] || { echo "release/incoming/ 에 .ait 파일이 없어요"; exit 1; }
+          M="${MEMO%%$'\n'*}"; M="${M:0:60}"   # 콘솔 메모는 120자 제한 → 한 줄 60자만
           FAIL=0
-          for f in release/incoming/*.ait; do
+          for f in "${FILES[@]}"; do
             echo "== $f =="
-            if npx ait deploy --api-key "$AIT_API_KEY" --location "$f" -m "${MEMO:0:180}" 2>&1 | tee deploy.log; then :; else FAIL=1; fi
+            if npx ait deploy --api-key "$AIT_API_KEY" --location "$f" -m "$M" 2>&1 | tee deploy.log; then :; else FAIL=1; fi
             SCHEME=$(sed "s/\x1b\[[0-9;]*m//g" deploy.log | grep -oE "intoss-private://[^[:space:]]+" | head -1)
             echo "### $(basename "$f")" >> "$GITHUB_STEP_SUMMARY"
             echo "테스트 링크: ${SCHEME:-업로드 실패 — 로그 확인}" >> "$GITHUB_STEP_SUMMARY"
