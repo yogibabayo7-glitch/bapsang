@@ -1,0 +1,41 @@
+# 미리 빌드한 .ait 파일들을 토스 콘솔에 테스트용으로 올려요 (검토 요청은 안 해요)
+# 쓰는 법: release/incoming/ 에 .ait 를 넣고 deploy-file 브랜치에 push → 전부 차례로 업로드
+# ⚠ 사장님이 '올려'라고 허락할 때만 실행해요. 저장소 없는 앱(밥값 챌린지·my다이어리 등)도
+#    이 저장소 Secrets의 AIT_API_KEY('전체 앱' 콘솔 API 키)로 올리는 용도예요.
+name: 토스 테스트 업로드 (파일)
+on:
+  push:
+    branches: [deploy-file]
+permissions:
+  contents: read
+concurrency:
+  group: deploy-file
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: 콘솔에 올리기 (파일별)
+        env:
+          AIT_API_KEY: ${{ secrets.AIT_API_KEY }}
+          MEMO: ${{ github.event.head_commit.message }}
+        run: |
+          if [ -z "$AIT_API_KEY" ]; then echo "AIT_API_KEY 비밀 값이 없어요"; exit 1; fi
+          shopt -s nullglob
+          FAIL=0
+          for f in release/incoming/*.ait; do
+            echo "== $f =="
+            if npx ait deploy --api-key "$AIT_API_KEY" --location "$f" -m "${MEMO:0:180}" 2>&1 | tee deploy.log; then :; else FAIL=1; fi
+            SCHEME=$(sed "s/\x1b\[[0-9;]*m//g" deploy.log | grep -oE "intoss-private://[^[:space:]]+" | head -1)
+            echo "### $(basename "$f")" >> "$GITHUB_STEP_SUMMARY"
+            echo "테스트 링크: ${SCHEME:-업로드 실패 — 로그 확인}" >> "$GITHUB_STEP_SUMMARY"
+            echo "::notice title=$(basename "$f")::${SCHEME:-업로드 실패}"
+          done
+          exit $FAIL
