@@ -144,7 +144,9 @@ export function chooseItems(all: Map<string, Row[]>): Chosen[] {
     let wantKind = entry.kind;
     if (!match.length && entry.kind !== '*' && sameCode.length) {
       console.log(`${entry.name}: 품종 ${entry.kind} 조사값이 없어 다른 품종으로 대신해요 (${[...new Set(sameCode.map((r) => `${r.kind} ${r.kindName}`))].join(', ')})`);
-      match = sameCode;
+      // 11/18: 다른 품목이 따로 쓰는 품종은 빼요 (포도 캠벨이 없을 때 샤인머스켓으로 대신해 '샤인머스켓' 품목과 똑같이 나왔음)
+      const claimed = new Set(CATALOG.filter((e) => e !== entry && e.code === entry.code && e.kind !== '*').map((e) => e.kind));
+      match = sameCode.filter((r) => !claimed.has(r.kind));
       wantKind = '*';
     } else if (!sameCode.length) console.log(`${entry.name}: 오늘 KAMIS 조사값 없음 (품목 ${entry.code})`);
     // 국산만: 품목·품종 이름에 수입/중국산 등이 들어간 줄은 빼요

@@ -69,6 +69,13 @@ const CASES: [string, string, boolean][] = [
   ['pear', '무료배송 사과 3kg', false],
   ['sesame', '국산 볶음 참깨, 500g', true],
   ['sesame', '고궁 통참깨 참기름, 350ml, 4개', false],
+  ['sesame', '중국산 볶음참깨, 1kg', false], // 11/18: 국산 품목 — 수입 표시 빼기
+  ['sesame', '농부미학 국내산 생참깨, 1kg, 2개', true],
+  ['abalone', '팡프레시 자숙 전복 슬라이스, 150g, 1개', false], // 11/18: 익힌 가공품
+  ['abalone', '오아시스 완도자숙 손질전복, 대, 300g, 6미, 1개', false],
+  ['abalone', '완도 활전복, 대, 71g, 10미, 1팩', true],
+  ['clam', '자숙 피바지락, 껍질손질 완료, 육수 그대로 냉동, 500g, 1팩', false],
+  ['clam', '남해 생물 왕바지락, 60미 내외, 1kg, 1개', true],
   ['walnut', '미토 호두아몬드 율무차, 18g, 50개입', false],
   ['walnut', '미국산 호두 분태, 1kg', true],
   ['avocado', '광천김 아보카도유김, 30g, 5캔', false],
