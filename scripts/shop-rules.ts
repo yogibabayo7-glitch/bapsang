@@ -288,6 +288,8 @@ for (const [n, want] of [
   ['어촌명가 간장 깐새우장, 500g, 3개', true],
   ['한울 정성가득 비빔밥용 나물세트, 125g, 1개', false], // 11/12
   ['반찬세트 3종 양념깻잎 콩자반 고들빼기무침, 300g, 3개', true],
+  ['매콤순대 곱창볶음, 300g, 1개', false], // 11/19
+  ['기절반찬 수제 진미채볶음 오징어채 무침, 300g, 2개', true],
 ] as [string, boolean][])
   if (!new RegExp(BANCHAN_NOT, 'i').test(n) !== want) fail(`반찬 시험 실패: ${n} (기대 ${want})`);
 
