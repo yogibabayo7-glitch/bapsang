@@ -29,6 +29,12 @@ const ok = (id: string, name: string) => {
 // [품목, 상품 이름, 통과해야 하나]
 const CASES: [string, string, boolean][] = [
   ['rice', '한국우리밀농협 우리밀 통밀쌀, 1kg, 2개', false], // 11/08
+  ['pork-belly', '옛날 냉동 삼겹살, 1kg, 2개', false], // 11/20
+  ['pork-belly', '미트포테이블 냉동 삼겹살, 1kg, 3개', false],
+  ['pork-belly', '한돈 냉동 삼겹살 구이용, 1kg', true],
+  ['pork-belly', '흑돼지 일품삼겹 구이용, 4kg, 1팩', true],
+  ['anchovy', '고추장 찍어 먹는 멸치, 100g, 2팩', false],
+  ['anchovy', '국내산 햇 고바멸치, 1.5kg, 1개', true],
   ['peanut', '볶은 땅콩 레드땅콩, 500g, 2봉', false], // 11/09
   ['peanut', '머거본 볶음땅콩, 300g, 6개', false],
   ['peanut', '여주산 국내산 볶은 땅콩, 500g, 1개', true],
@@ -290,6 +296,8 @@ for (const [n, want] of [
   ['반찬세트 3종 양념깻잎 콩자반 고들빼기무침, 300g, 3개', true],
   ['매콤순대 곱창볶음, 300g, 1개', false], // 11/19
   ['기절반찬 수제 진미채볶음 오징어채 무침, 300g, 2개', true],
+  ['한춘섭 명장의 비법 만능시래기, 150g, 5개', false], // 11/20
+  ['오아시스 모둠나물 3종, 국내산 100%, 300g, 1개', true],
 ] as [string, boolean][])
   if (!new RegExp(BANCHAN_NOT, 'i').test(n) !== want) fail(`반찬 시험 실패: ${n} (기대 ${want})`);
 
