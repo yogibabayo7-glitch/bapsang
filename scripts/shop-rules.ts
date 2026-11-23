@@ -28,6 +28,12 @@ const ok = (id: string, name: string) => {
 
 // [품목, 상품 이름, 통과해야 하나]
 const CASES: [string, string, boolean][] = [
+  ['perilla', '시소잎 일본 깻잎, 10g, 3팩', false], // 11/23
+  ['perilla', '국내산 깻잎, 1kg, 1박스', true],
+  ['peanut', '그대로푸드 튀김땅콩 비너스땅콩, 1kg, 4개', false],
+  ['peanut', '여주특산영농조합법인 여주 햇 볶은땅콩, 500g, 2개', true],
+  ['spanish-mackerel', '삼치회, 600g, 1박스', false],
+  ['spanish-mackerel', '국내산 저염 삼치, 중, 3팩', true],
   ['rice', '한국우리밀농협 우리밀 통밀쌀, 1kg, 2개', false], // 11/08
   ['pork-belly', '옛날 냉동 삼겹살, 1kg, 2개', false], // 11/20
   ['pork-belly', '미트포테이블 냉동 삼겹살, 1kg, 3개', false],
