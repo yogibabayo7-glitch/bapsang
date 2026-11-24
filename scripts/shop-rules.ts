@@ -125,6 +125,8 @@ const CASES: [string, string, boolean][] = [
   ['eggplant', '여러가지 나물 세트', false],
   ['dried-pepper', '국산 햇 태양초 건고추, 1근', true],
   ['dried-pepper', '국산 태양초 고춧가루, 1kg', false],
+  ['dried-pepper', '영양 햇 화건 건고추 꼭지제거, 600g', true],
+  ['dried-pepper', '국산 건고추 고추부각, 200g', false],
   ['pepper-powder', '홍주부 국내산 고춧가루, 일반굵기, 보통매운맛', true],
   ['pepper-powder', '중국산 고춧가루, 1kg', false],
   ['egg', '무항생제 특란, 30구', true],
